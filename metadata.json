@@ -1,0 +1,6 @@
+{
+  "name": "LUMORA - Luxury Fashion & Couture",
+  "description": "Premium multi-page luxury fashion e-commerce experience featuring quiet luxury apparel, fine watches, handcrafted leather shoes, and timeless accessories.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
