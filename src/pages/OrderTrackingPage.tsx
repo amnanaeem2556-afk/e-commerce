@@ -8,7 +8,7 @@ export const OrderTrackingPage: React.FC = () => {
   const { currentOrder, setCurrentPage, updateOrderStatus } = useShop();
 
   const [searchOrderId, setSearchOrderId] = useState(currentOrder ? currentOrder.id : 'LUM-948201');
-  const [searchEmail, setSearchEmail] = useState(currentOrder ? currentOrder.email : 'fatima.malik@example.com');
+  const [searchEmail, setSearchEmail] = useState(currentOrder ? currentOrder.email : '');
   const [trackedOrder, setTrackedOrder] = useState<Order | null>(null);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -29,18 +29,14 @@ export const OrderTrackingPage: React.FC = () => {
     }
   };
 
-  // Perform backend tracking query
-  const executeTrack = async (orderId: string, identifier: string) => {
+  // Perform backend tracking query using Order ID (and optional email/phone)
+  const executeTrack = async (orderId: string, identifier?: string) => {
     const cleanId = orderId.trim();
-    const cleanIdentifier = identifier.trim();
+    const cleanIdentifier = identifier ? identifier.trim() : '';
 
-    // 7. Validate all inputs
+    // Validate Order ID
     if (!cleanId) {
       setError('Please enter your Lumora Order ID (e.g. LUM-948201).');
-      return;
-    }
-    if (!cleanIdentifier) {
-      setError('Please enter your Email or Mobile Number.');
       return;
     }
 
@@ -48,7 +44,7 @@ export const OrderTrackingPage: React.FC = () => {
     setError('');
 
     try {
-      // 2. Fetch matching order from backend database
+      // Fetch matching order from backend database
       const res = await fetch('/api/orders/track', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -61,12 +57,9 @@ export const OrderTrackingPage: React.FC = () => {
       const data = await res.json();
 
       if (!res.ok) {
-        // 4. "Order not found."
-        // 5. "The provided information does not match this order."
-        setError(data.error || 'Order not found.');
+        setError(data.error || 'Order not found. Please verify your Order ID.');
         setTrackedOrder(null);
       } else {
-        // 3. Display live database order
         setTrackedOrder(data);
         setError('');
       }
@@ -78,16 +71,31 @@ export const OrderTrackingPage: React.FC = () => {
     }
   };
 
-  // Initial load: fetch recent orders and automatically track initial order if present
+  // Initial load: fetch recent orders, parse URL params, and automatically track
   useEffect(() => {
     fetchRecentOrders();
-    const initId = currentOrder ? currentOrder.id : 'LUM-948201';
-    const initIdentifier = currentOrder ? currentOrder.email : 'fatima.malik@example.com';
-    executeTrack(initId, initIdentifier);
-  }, []);
 
-  // 12. Update the timeline automatically whenever the admin changes the order status
-  // 14. The customer tracking page must instantly reflect those updates
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      const urlOrderId = searchParams.get('orderId') || searchParams.get('orderNumber') || searchParams.get('track');
+      const urlEmail = searchParams.get('email') || searchParams.get('identifier');
+
+      if (urlOrderId) {
+        setSearchOrderId(urlOrderId);
+        if (urlEmail) {
+          setSearchEmail(urlEmail);
+        }
+        executeTrack(urlOrderId, urlEmail || '');
+        return;
+      }
+    }
+
+    const initId = currentOrder ? currentOrder.id : 'LUM-948201';
+    const initIdentifier = currentOrder ? currentOrder.email : '';
+    executeTrack(initId, initIdentifier);
+  }, [currentOrder?.id]);
+
+  // Update timeline automatically whenever the admin changes the order status
   useEffect(() => {
     if (!trackedOrder || !searchOrderId || !searchEmail) return;
 
@@ -131,13 +139,13 @@ export const OrderTrackingPage: React.FC = () => {
     return () => window.removeEventListener('lumora:order_updated', handleOrderUpdate as EventListener);
   }, [trackedOrder?.id]);
 
-  // 1. The Track button must work
+  // Track button submit handler
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     executeTrack(searchOrderId, searchEmail);
   };
 
-  // 3. Automatically highlight the correct timeline step
+  // Map database status to 4 key stages: Processing, Shipped, Out for Delivery, Delivered
   const getStepIndex = (status: string) => {
     const s = (status || '').toLowerCase().replace(/[\s-]/g, '_');
     switch (s) {
@@ -154,45 +162,72 @@ export const OrderTrackingPage: React.FC = () => {
       case 'delivered':
         return 5;
       default:
-        return 1;
+        return 2;
+    }
+  };
+
+  const getStatusDisplay = (status: string) => {
+    const s = (status || '').toLowerCase().replace(/[\s-]/g, '_');
+    switch (s) {
+      case 'confirmed':
+        return { label: 'Order Confirmed', pill: 'Processing', color: 'bg-amber-50 text-amber-800 border-amber-300' };
+      case 'processing':
+      case 'packed':
+        return { label: 'Processing at Atelier', pill: 'Processing', color: 'bg-amber-50 text-amber-800 border-amber-300' };
+      case 'shipped':
+      case 'in_transit':
+        return { label: 'Shipped & In Transit', pill: 'Shipped', color: 'bg-blue-50 text-blue-800 border-blue-300' };
+      case 'out_for_delivery':
+        return { label: 'Out for Delivery', pill: 'Out for Delivery', color: 'bg-purple-50 text-purple-800 border-purple-300' };
+      case 'delivered':
+        return { label: 'Delivered', pill: 'Delivered', color: 'bg-emerald-50 text-emerald-800 border-emerald-300' };
+      default:
+        return { label: 'Processing', pill: 'Processing', color: 'bg-amber-50 text-amber-800 border-amber-300' };
     }
   };
 
   const activeStep = trackedOrder ? getStepIndex(trackedOrder.status) : 2;
+  const statusDisplay = trackedOrder ? getStatusDisplay(trackedOrder.status) : { label: 'Processing', pill: 'Processing', color: 'bg-amber-50 text-amber-800 border-amber-300' };
+
+  const isDevMode =
+    typeof window !== 'undefined' &&
+    (new URLSearchParams(window.location.search).get('dev') === 'true' ||
+      new URLSearchParams(window.location.search).get('staff') === 'true' ||
+      new URLSearchParams(window.location.search).get('debug') === 'true');
 
   const trackingSteps = [
-    { num: 1, label: 'Order Registered', desc: 'Secure payment captured' },
+    { num: 1, label: 'Order Confirmed', desc: 'Secure payment registered' },
     {
       num: 2,
-      label: 'Atelier Inspection',
-      desc: trackedOrder?.status === 'packed' ? 'Packed & wax sealed' : 'Hand-pressed & silk-tied',
+      label: 'Processing',
+      desc: trackedOrder?.status === 'packed' ? 'Packed & wax sealed' : 'Atelier inspection & boxing',
     },
     {
       num: 3,
-      label: 'Dispatched via Courier',
-      desc: trackedOrder?.status === 'in_transit' ? 'In transit to local hub' : 'En route from Lahore salon',
+      label: 'Shipped',
+      desc: trackedOrder?.status === 'in_transit' ? 'En route in transit' : 'Handed to TCS VIP Express',
     },
-    { num: 4, label: 'Out for Handover', desc: 'Driver carrying parcel' },
-    { num: 5, label: 'Delivered', desc: 'Signature obtained' },
+    { num: 4, label: 'Out for Delivery', desc: 'Courier carrying parcel' },
+    { num: 5, label: 'Delivered', desc: 'Handover complete' },
   ];
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12 space-y-8 sm:space-y-10">
       {/* Header */}
       <div className="text-center max-w-xl mx-auto space-y-2">
         <span className="text-[10px] uppercase tracking-[0.25em] text-[#C48A5A] font-semibold">
           Live White-Glove Telemetry
         </span>
         <h1 className="font-heading text-3xl sm:text-4xl lg:text-5xl text-[#2B1D17] tracking-[0.03em] leading-none">
-          Track Your Order
+          Track Your <span className="text-[#C48A5A]">Order</span>
         </h1>
-        <p className="text-xs sm:text-sm text-[#6B4A3A] font-light">
+        <p className="text-xs sm:text-sm text-[#4A3528] font-normal leading-relaxed">
           Monitor your shipment from our private Lahore cutting room to your doorstep anywhere in Pakistan.
         </p>
       </div>
 
       {/* Search Bar Form */}
-      <div className="bg-[#FAF6F0] border border-[#E7D6C1] p-6 sm:p-8">
+      <div className="bg-[#FAF6F0] border border-[#E7D6C1] p-5 sm:p-7 lg:p-8">
         <form onSubmit={handleSearch} className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-end">
           <div className="sm:col-span-5">
             <label className="text-xs font-medium text-[#2B1D17] block mb-1">
@@ -209,13 +244,13 @@ export const OrderTrackingPage: React.FC = () => {
 
           <div className="sm:col-span-5">
             <label className="text-xs font-medium text-[#2B1D17] block mb-1">
-              Email or Mobile Number
+              Email or Mobile Number <span className="text-[#8C6A58] font-normal">(Optional)</span>
             </label>
             <input
               type="text"
               value={searchEmail}
               onChange={(e) => setSearchEmail(e.target.value)}
-              placeholder="e.g. patron@domain.com or 0300 1234567"
+              placeholder="patron@domain.com or leave blank to search by ID"
               className="w-full p-2.5 bg-white border border-[#E7D6C1] text-xs text-[#2B1D17] focus:outline-none focus:border-[#2B1D17]"
             />
           </div>
@@ -245,10 +280,10 @@ export const OrderTrackingPage: React.FC = () => {
           </p>
         )}
 
-        {/* Quick Sample Order IDs (Live from Database) */}
-        {recentOrders.length > 0 && (
+        {/* Quick Sample Order IDs (Only in Development Mode) */}
+        {isDevMode && recentOrders.length > 0 && (
           <div className="mt-4 pt-4 border-t border-[#E7D6C1]/60 flex flex-wrap items-center gap-2 text-[11px] text-[#6B4A3A]">
-            <span>Recent orders:</span>
+            <span>Recent orders (Dev):</span>
             {recentOrders.slice(0, 5).map((o) => (
               <button
                 key={o.id}
@@ -278,12 +313,17 @@ export const OrderTrackingPage: React.FC = () => {
                 <span className="text-[10px] uppercase tracking-widest text-[#C48A5A] font-semibold">
                   Shipment #{trackedOrder.id}
                 </span>
-                <h2 className="font-heading text-2xl sm:text-3xl text-[#2B1D17] tracking-[0.03em] leading-none mt-0.5">
-                  Shipment Status:{' '}
-                  <span className="capitalize text-[#6B4A3A]">
-                    {trackedOrder.status.replace(/_/g, ' ')}
+                <div className="flex flex-wrap items-center gap-2 mt-1">
+                  <h2 className="font-heading text-2xl sm:text-3xl text-[#2B1D17] tracking-[0.03em] leading-none">
+                    Status:{' '}
+                    <span className="capitalize text-[#2B1D17]">
+                      {statusDisplay.label}
+                    </span>
+                  </h2>
+                  <span className={`px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider border ${statusDisplay.color}`}>
+                    {statusDisplay.pill}
                   </span>
-                </h2>
+                </div>
                 <p className="text-xs text-[#6B4A3A] mt-1">
                   Recipient: <strong>{trackedOrder.customerName}</strong> &bull; {trackedOrder.shippingAddress}
                   {trackedOrder.city ? `, ${trackedOrder.city}` : ''}
@@ -376,48 +416,50 @@ export const OrderTrackingPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Interactive Admin Quick Status Controls for Instant Testing */}
-          <div className="bg-[#FAF6F0] border border-[#E7D6C1] p-4 text-xs">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <span className="text-[10px] uppercase tracking-wider font-bold text-[#C48A5A] block">
-                  Atelier Staff Status Controls (Instant Sync)
-                </span>
-                <span className="text-[11px] text-[#6B4A3A]">
-                  Update #{trackedOrder.id} status in live database to test timeline reaction:
-                </span>
-              </div>
-              <div className="flex flex-wrap items-center gap-1.5">
-                {[
-                  { key: 'confirmed', label: 'Confirmed' },
-                  { key: 'processing', label: 'Processing' },
-                  { key: 'packed', label: 'Packed' },
-                  { key: 'shipped', label: 'Shipped' },
-                  { key: 'in_transit', label: 'In Transit' },
-                  { key: 'out_for_delivery', label: 'Out for Delivery' },
-                  { key: 'delivered', label: 'Delivered' }
-                ].map((st) => (
-                  <button
-                    key={st.key}
-                    type="button"
-                    onClick={async () => {
-                      const res = await updateOrderStatus(trackedOrder.id, st.key);
-                      if (res.success && res.order) {
-                        setTrackedOrder(res.order);
-                      }
-                    }}
-                    className={`px-2 py-1 text-[10px] uppercase font-semibold transition-all cursor-pointer ${
-                      trackedOrder.status === st.key
-                        ? 'bg-[#2B1D17] text-[#FAF6F0] ring-2 ring-[#C48A5A]'
-                        : 'bg-white border border-[#E7D6C1] text-[#2B1D17] hover:bg-[#E7D6C1]/50'
-                    }`}
-                  >
-                    {trackedOrder.status === st.key ? `✓ ${st.label}` : st.label}
-                  </button>
-                ))}
+          {/* Interactive Admin Quick Status Controls (Only in Development Mode) */}
+          {isDevMode && (
+            <div className="bg-[#FAF6F0] border border-[#E7D6C1] p-4 text-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <span className="text-[10px] uppercase tracking-wider font-bold text-[#C48A5A] block">
+                    Atelier Staff Status Controls (Dev Mode)
+                  </span>
+                  <span className="text-[11px] text-[#6B4A3A]">
+                    Update #{trackedOrder.id} status in live database to test timeline reaction:
+                  </span>
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {[
+                    { key: 'confirmed', label: 'Confirmed' },
+                    { key: 'processing', label: 'Processing' },
+                    { key: 'packed', label: 'Packed' },
+                    { key: 'shipped', label: 'Shipped' },
+                    { key: 'in_transit', label: 'In Transit' },
+                    { key: 'out_for_delivery', label: 'Out for Delivery' },
+                    { key: 'delivered', label: 'Delivered' }
+                  ].map((st) => (
+                    <button
+                      key={st.key}
+                      type="button"
+                      onClick={async () => {
+                        const res = await updateOrderStatus(trackedOrder.id, st.key);
+                        if (res.success && res.order) {
+                          setTrackedOrder(res.order);
+                        }
+                      }}
+                      className={`px-2 py-1 text-[10px] uppercase font-semibold transition-all cursor-pointer ${
+                        trackedOrder.status === st.key
+                          ? 'bg-[#2B1D17] text-[#FAF6F0] ring-2 ring-[#C48A5A]'
+                          : 'bg-white border border-[#E7D6C1] text-[#2B1D17] hover:bg-[#E7D6C1]/50'
+                      }`}
+                    >
+                      {trackedOrder.status === st.key ? `✓ ${st.label}` : st.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Items In Parcel */}
           <div className="bg-[#FAF6F0] border border-[#E7D6C1] p-6 sm:p-8 space-y-4">

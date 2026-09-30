@@ -70,6 +70,15 @@ model Order {
   total             Float
   estimatedDelivery String
   itemsData         String?
+  emailSent         Boolean?    @default(false)
+  emailProvider     String?
+  emailMessageId    String?
+  emailError        String?
+  adminEmailSent    Boolean?    @default(false)
+  adminEmailProvider String?
+  adminEmailMessageId String?
+  adminEmailError   String?
+  adminEmail        String?
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
 

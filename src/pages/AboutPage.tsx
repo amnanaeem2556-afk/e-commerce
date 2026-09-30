@@ -6,29 +6,41 @@ export const AboutPage: React.FC = () => {
   const { setCurrentPage } = useShop();
 
   return (
-    <div className="space-y-20 pb-16">
+    <div className="space-y-12 sm:space-y-16 lg:space-y-24 pb-12 sm:pb-16 lg:pb-20">
       {/* Hero Header */}
-      <section className="relative h-[65vh] min-h-[460px] max-h-[620px] bg-[#2B1D17] text-[#FAF6F0] flex items-center justify-center overflow-hidden">
+      <section className="relative h-[46vh] sm:h-[60vh] min-h-[320px] sm:min-h-[380px] max-h-[620px] bg-[#2B1D17] text-[#FAF6F0] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
-          <img
-            src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1800&q=85"
-            alt="Lumora Atelier"
-            loading="eager"
-            decoding="async"
-            fetchPriority="high"
-            className="w-full h-full object-cover opacity-35 animate-hero-zoom"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#2B1D17] via-transparent to-[#2B1D17]/70" />
+          <picture className="w-full h-full">
+            <source
+              type="image/webp"
+              media="(max-width: 767px)"
+              srcSet="https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format,compress&fit=crop&w=720&q=80"
+            />
+            <source
+              type="image/webp"
+              media="(min-width: 768px)"
+              srcSet="https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format,compress&fit=crop&w=1600&q=82"
+            />
+            <img
+              src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format,compress&fit=crop&w=1600&q=82"
+              alt="Lumora Atelier"
+              loading="eager"
+              decoding="async"
+              fetchPriority="high"
+              className="w-full h-full object-cover opacity-60 animate-hero-zoom"
+            />
+          </picture>
+          <div className="absolute inset-0 bg-gradient-to-t from-[#140C08] via-[#140C08]/50 to-[#140C08]/70" />
         </div>
 
-        <div className="relative z-10 text-center max-w-2xl mx-auto px-4 space-y-4">
-          <span className="text-[10.5px] uppercase tracking-[0.3em] text-[#C48A5A] font-semibold">
+        <div className="relative z-10 text-center max-w-2xl mx-auto px-4 space-y-3.5 sm:space-y-4">
+          <span className="font-sans text-[10px] sm:text-[11px] uppercase tracking-[0.18em] sm:tracking-[0.2em] text-[#C48A5A] font-semibold">
             The Maison & Heritage
           </span>
-          <h1 className="font-heading text-4xl sm:text-5xl lg:text-6xl tracking-[0.03em] leading-none text-[#FAF6F0]">
-            Quiet Luxury Architecture
+          <h1 className="font-heading text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-[68px] xl:text-[76px] text-[#FAF6F0] tracking-[0.03em] leading-[1.05] sm:leading-[0.96] max-w-2xl break-words mx-auto drop-shadow-sm">
+            Quiet Luxury <span className="text-[#E5A97A]">Architecture</span>
           </h1>
-          <p className="text-xs sm:text-sm text-[#E7D6C1]/85 font-light leading-relaxed max-w-xl mx-auto">
+          <p className="font-sans text-xs xs:text-sm sm:text-base text-[#FAF6F0]/90 font-normal leading-relaxed sm:leading-[1.7] tracking-[0.01em] max-w-xl mx-auto drop-shadow-xs">
             Lumora was founded in Lahore to challenge the fleeting ephemerality of fast-fashion. We build timeless silhouettes engineered from natural fibers of peerless lineage.
           </p>
         </div>
@@ -36,18 +48,18 @@ export const AboutPage: React.FC = () => {
 
       {/* 1. Our Story & Manifesto */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-          <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 items-center">
+          <div className="space-y-4 sm:space-y-6">
             <span className="text-[10px] uppercase tracking-[0.25em] text-[#C48A5A] font-semibold">
               Origin & Lineage
             </span>
             <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl text-[#2B1D17] tracking-[0.03em] leading-none">
               Modern Heirlooms
             </h2>
-            <p className="text-xs sm:text-sm text-[#2B1D17]/80 font-light leading-relaxed">
+            <p className="text-xs sm:text-sm text-[#2B1D17] font-normal leading-relaxed">
               In a world crowded with loud logos and seasonal turnover, Lumora stands for restraint. We believe that true luxury does not shout; it is whispered through the clean angle of an unlined lapel, the tactile density of pure Mongolian cashmere, and the deliberate weight of Swiss-automatic watch handiwork.
             </p>
-            <p className="text-xs sm:text-sm text-[#2B1D17]/80 font-light leading-relaxed">
+            <p className="text-xs sm:text-sm text-[#2B1D17] font-normal leading-relaxed">
               Every garment in our catalog is engineered to be worn for decades, softening gracefully with age. We manufacture in limited micro-batches of no more than 150 pieces per silhouette, preserving artisanal intimacy.
             </p>
           </div>
@@ -64,8 +76,8 @@ export const AboutPage: React.FC = () => {
       </section>
 
       {/* 2. Pillars of Craftsmanship & Raw Materials */}
-      <section className="bg-[#FAF6F0] border-y border-[#E7D6C1] py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+      <section className="bg-[#FAF6F0] border-y border-[#E7D6C1] py-10 sm:py-14 lg:py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 sm:space-y-10 lg:space-y-12">
           <div className="text-center max-w-xl mx-auto">
             <span className="text-[10px] uppercase tracking-[0.25em] text-[#C48A5A] font-semibold">
               The Materials
@@ -75,8 +87,8 @@ export const AboutPage: React.FC = () => {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-xs">
-            <div className="bg-white/60 p-6 border border-[#E7D6C1] space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 text-xs">
+            <div className="bg-white/60 p-5 sm:p-6 border border-[#E7D6C1] space-y-3">
               <span className="font-sans text-2xl font-bold text-[#C48A5A]">01</span>
               <h3 className="font-sans text-base sm:text-lg font-semibold text-[#2B1D17]">
                 Grade-A Mongolian Cashmere
@@ -86,7 +98,7 @@ export const AboutPage: React.FC = () => {
               </p>
             </div>
 
-            <div className="bg-white/60 p-6 border border-[#E7D6C1] space-y-3">
+            <div className="bg-white/60 p-5 sm:p-6 border border-[#E7D6C1] space-y-3">
               <span className="font-sans text-2xl font-bold text-[#C48A5A]">02</span>
               <h3 className="font-sans text-base sm:text-lg font-semibold text-[#2B1D17]">
                 Mulberry Silk from Lake Como
@@ -96,7 +108,7 @@ export const AboutPage: React.FC = () => {
               </p>
             </div>
 
-            <div className="bg-white/60 p-6 border border-[#E7D6C1] space-y-3">
+            <div className="bg-white/60 p-5 sm:p-6 border border-[#E7D6C1] space-y-3">
               <span className="font-sans text-2xl font-bold text-[#C48A5A]">03</span>
               <h3 className="font-sans text-base sm:text-lg font-semibold text-[#2B1D17]">
                 Vegetable-Tanned Tuscan Calfskin
@@ -110,7 +122,7 @@ export const AboutPage: React.FC = () => {
       </section>
 
       {/* 3. The Creative Directorate & Master Tailors */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 sm:space-y-10">
         <div className="text-center max-w-xl mx-auto">
           <span className="text-[10px] uppercase tracking-[0.25em] text-[#C48A5A] font-semibold">
             Human Hands
@@ -120,7 +132,7 @@ export const AboutPage: React.FC = () => {
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8">
           {[
             {
               name: 'Sarah Montgomery',
@@ -154,7 +166,7 @@ export const AboutPage: React.FC = () => {
               <p className="text-[11px] uppercase tracking-wider text-[#C48A5A] font-semibold">
                 {member.role}
               </p>
-              <p className="text-xs text-[#6B4A3A] font-light leading-relaxed">{member.bio}</p>
+              <p className="text-xs text-[#523B2F] font-normal leading-relaxed">{member.bio}</p>
             </div>
           ))}
         </div>
@@ -162,29 +174,29 @@ export const AboutPage: React.FC = () => {
 
       {/* 4. Flagship Salon (Galleria Mall, Lahore) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-[#2B1D17] text-[#FAF6F0] p-8 sm:p-14 border border-[#6B4A3A] grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          <div className="lg:col-span-7 space-y-5">
+        <div className="bg-[#2B1D17] text-[#FAF6F0] p-6 sm:p-10 lg:p-14 border border-[#6B4A3A] grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-center">
+          <div className="lg:col-span-7 space-y-4 sm:space-y-5">
             <span className="text-[10px] uppercase tracking-[0.25em] text-[#C48A5A] font-semibold">
               The Flagship Salon
             </span>
             <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl text-[#FAF6F0] tracking-[0.03em] leading-none">
               Galleria Mall Salon
             </h2>
-            <p className="text-xs sm:text-sm text-[#E7D6C1]/85 font-light leading-relaxed">
+            <p className="text-xs sm:text-sm text-[#E7D6C1] font-normal leading-relaxed">
               Step inside our private sanctuary of quiet luxury. Patrons may schedule bespoke fittings with master tailors, inspect full bolt fabrics, and relax in our private salon lounge with single-origin teas.
             </p>
 
-            <div className="space-y-2 text-xs text-[#E7D6C1] pt-2">
+            <div className="space-y-2 text-xs text-[#E7D6C1] pt-1">
               <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-[#C48A5A]" />
+                <MapPin className="w-4 h-4 text-[#C48A5A] shrink-0" />
                 <span>Suite 12-14, First Level, Galleria Mall, Main Boulevard, Gulberg III, Lahore</span>
               </div>
               <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-[#C48A5A]" />
+                <Clock className="w-4 h-4 text-[#C48A5A] shrink-0" />
                 <span>Monday – Sunday: 11:00 AM – 10:00 PM</span>
               </div>
               <div className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-[#C48A5A]" />
+                <Phone className="w-4 h-4 text-[#C48A5A] shrink-0" />
                 <span>Private Salon Concierge: +92 (042) 3578-9000</span>
               </div>
             </div>

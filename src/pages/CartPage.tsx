@@ -49,8 +49,8 @@ export const CartPage: React.FC = () => {
         <div className="w-20 h-20 mx-auto rounded-full bg-[#E7D6C1]/30 flex items-center justify-center text-[#2B1D17]">
           <ShoppingBag className="w-9 h-9 text-[#6B4A3A]" />
         </div>
-        <h1 className="font-heading text-3xl sm:text-4xl text-[#2B1D17] tracking-[0.03em] leading-none">
-          Shopping Bag Empty
+        <h1 className="font-heading text-3xl sm:text-4xl lg:text-5xl text-[#2B1D17] tracking-[0.03em] leading-none">
+          Shopping Bag <span className="text-[#C48A5A]">Empty</span>
         </h1>
         <p className="text-xs sm:text-sm text-[#6B4A3A] max-w-md mx-auto leading-relaxed">
           Your personal wardrobe curation awaits. Explore our latest sartorial releases or classic double-faced cashmere staples.
@@ -74,15 +74,15 @@ export const CartPage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12 space-y-6 sm:space-y-8 lg:space-y-10">
       {/* Header */}
-      <div className="border-b border-[#E7D6C1] pb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+      <div className="border-b border-[#E7D6C1] pb-4 sm:pb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4">
         <div>
           <span className="text-[10px] uppercase tracking-[0.25em] text-[#C48A5A] font-semibold">
             Atelier Order Draft
           </span>
-          <h1 className="font-heading text-3xl sm:text-4xl text-[#2B1D17] tracking-[0.03em] leading-none mt-1">
-            Shopping Bag ({cart.reduce((a, c) => a + c.quantity, 0)})
+          <h1 className="font-heading text-3xl sm:text-4xl lg:text-5xl text-[#2B1D17] tracking-[0.03em] leading-none mt-1">
+            Shopping <span className="text-[#C48A5A]">Bag</span> ({cart.reduce((a, c) => a + c.quantity, 0)})
           </h1>
         </div>
 
@@ -96,7 +96,7 @@ export const CartPage: React.FC = () => {
       </div>
 
       {/* Free Shipping Progress Indicator */}
-      <div className="bg-white border border-[#E2D4C3] p-5 shadow-[0_2px_14px_rgba(43,29,23,0.04)]">
+      <div className="bg-white border border-[#E2D4C3] p-4 sm:p-5 shadow-[0_2px_14px_rgba(43,29,23,0.04)]">
         <div className="flex justify-between items-center text-xs mb-2.5">
           <span className="text-[#1F140E] font-medium">
             {amountNeededForFreeShipping === 0 ? (
@@ -121,16 +121,16 @@ export const CartPage: React.FC = () => {
       </div>
 
       {/* Cart Grid: Items on Left, Order Summary on Right */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-10 items-start">
         {/* Cart Item List */}
         <div className="lg:col-span-8 space-y-6">
           <div className="divide-y divide-[#EFE5D8] border-t border-b border-[#EFE5D8]">
             {cart.map((item) => (
-              <div key={item.id} className="py-6 flex flex-col sm:flex-row gap-5 items-start">
+              <div key={item.id} className="py-5 sm:py-6 flex flex-col sm:flex-row gap-4 sm:gap-5 items-start">
                 {/* Thumbnail */}
                 <div
                   onClick={() => viewProduct(item.product)}
-                  className="w-24 sm:w-28 aspect-[3/4] overflow-hidden bg-[#FAF6F0] shrink-0 cursor-pointer border border-[#E2D4C3] shadow-xs"
+                  className="w-20 sm:w-28 aspect-[3/4] overflow-hidden bg-[#FAF6F0] shrink-0 cursor-pointer border border-[#E2D4C3] shadow-xs"
                 >
                   <img
                     src={item.product?.images?.[0] || ''}
@@ -149,7 +149,7 @@ export const CartPage: React.FC = () => {
                       </span>
                       <h3
                         onClick={() => viewProduct(item.product)}
-                        className="font-sans text-base text-[#1F140E] hover:text-[#A66838] cursor-pointer font-semibold tracking-tight"
+                        className="font-serif text-[17px] sm:text-[18px] text-[#1F140E] hover:text-[#A66838] cursor-pointer font-normal leading-snug"
                       >
                         {item.product.name}
                       </h3>
@@ -211,7 +211,7 @@ export const CartPage: React.FC = () => {
           </div>
 
           {/* Complimentary Gift Box Option */}
-          <div className="bg-white border border-[#E2D4C3] p-5 sm:p-6 space-y-3.5 shadow-[0_2px_14px_rgba(43,29,23,0.04)]">
+          <div className="bg-white border border-[#E2D4C3] p-4 sm:p-6 space-y-3.5 shadow-[0_2px_14px_rgba(43,29,23,0.04)]">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <Gift className="w-4 h-4 text-[#A66838]" />
@@ -248,7 +248,7 @@ export const CartPage: React.FC = () => {
         </div>
 
         {/* ORDER SUMMARY SIDEBAR */}
-        <div className="lg:col-span-4 bg-white border border-[#E2D4C3] p-6 sm:p-7 space-y-6 sticky top-28 shadow-[0_4px_24px_rgba(43,29,23,0.06)]">
+        <div className="lg:col-span-4 bg-white border border-[#E2D4C3] p-5 sm:p-7 space-y-5 sm:space-y-6 sticky top-20 shadow-[0_4px_24px_rgba(43,29,23,0.06)]">
           <h2 className="font-heading text-2xl sm:text-3xl text-[#1F140E] pb-4 border-b border-[#EFE5D8] tracking-[0.03em] leading-none">
             Order Summary
           </h2>

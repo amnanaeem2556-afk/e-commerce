@@ -96,31 +96,31 @@ export const ReviewsPage: React.FC = () => {
   const avg = reviews.reduce((a, b) => a + b.rating, 0) / totalReviews;
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 lg:py-14 space-y-8 sm:space-y-10 lg:space-y-12">
       {/* Header */}
       <div className="text-center max-w-xl mx-auto space-y-2">
         <span className="text-[10px] uppercase tracking-[0.25em] text-[#C48A5A] font-semibold">
           Client Echoes
         </span>
         <h1 className="font-heading text-3xl sm:text-4xl lg:text-5xl text-[#2B1D17] tracking-[0.03em] leading-none">
-          Client Reviews
+          Client <span className="text-[#A66838]">Reviews</span>
         </h1>
-        <p className="text-xs sm:text-sm text-[#6B4A3A] font-light">
-          Real reflections on drape, texture, unboxing, and durability from patrons across Pakistan.
+        <p className="text-xs sm:text-sm text-[#523B2F] font-normal leading-relaxed">
+          Real reflections on drape, texture, unboxing, and durability from clients across Pakistan.
         </p>
       </div>
 
       {/* Overview Score & Breakdown */}
-      <div className="bg-white border border-[#E2D4C3] p-6 sm:p-8 shadow-[0_4px_24px_rgba(43,29,23,0.06)] grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
-        <div className="md:col-span-4 text-center md:text-left border-b md:border-b-0 md:border-r border-[#EFE5D8] pb-6 md:pb-0 md:pr-8">
-          <div className="font-sans text-5xl font-bold text-[#1F140E] tracking-tight">
+      <div className="bg-[#FAF6F0] rounded-[20px] sm:rounded-[22px] border border-[#EBDDCF] p-5 sm:p-7 lg:p-8 shadow-[0_4px_22px_rgba(43,29,23,0.04)] grid grid-cols-1 md:grid-cols-12 gap-6 sm:gap-8 items-center">
+        <div className="md:col-span-4 text-center md:text-left border-b md:border-b-0 md:border-r border-[#EBDDCF] pb-6 md:pb-0 md:pr-8">
+          <div className="font-sans text-5xl font-bold text-[#1F140E] tracking-normal">
             {avg.toFixed(1)} <span className="text-xl text-[#523B2F] font-normal">/ 5</span>
           </div>
           <div className="flex items-center justify-center md:justify-start text-[#C48A5A] gap-1 my-2.5">
             {[...Array(5)].map((_, i) => (
               <Star
                 key={i}
-                className={`w-5 h-5 ${i < Math.floor(avg) ? 'fill-[#C48A5A] text-[#C48A5A]' : 'text-[#E2D4C3]'}`}
+                className={`w-5 h-5 ${i < Math.floor(avg) ? 'fill-[#C48A5A] text-[#C48A5A]' : 'text-[#EBDDCF]'}`}
               />
             ))}
           </div>
@@ -137,7 +137,7 @@ export const ReviewsPage: React.FC = () => {
               return (
                 <div key={st} className="flex items-center gap-3">
                   <span className="w-14 text-[#1F140E] font-medium">{st} Stars</span>
-                  <div className="flex-1 h-2.5 bg-[#EFE5D8] rounded-full overflow-hidden">
+                  <div className="flex-1 h-2.5 bg-[#EBDDCF] rounded-full overflow-hidden">
                     <div className="h-full bg-[#C48A5A] rounded-full" style={{ width: `${pct}%` }} />
                   </div>
                   <span className="w-8 text-right text-[11px] text-[#7A6253] font-semibold">{count}</span>
@@ -312,20 +312,20 @@ export const ReviewsPage: React.FC = () => {
           return (
             <div
               key={rev.id}
-              className="bg-white border border-[#E2D4C3] p-6 sm:p-7 space-y-3.5 shadow-[0_2px_14px_rgba(43,29,23,0.04)] hover:shadow-[0_10px_26px_rgba(43,29,23,0.08)] hover:border-[#B87A45] transition-all duration-300"
+              className="bg-[#FAF6F0] rounded-[20px] sm:rounded-[22px] border border-[#EBDDCF] p-5 sm:p-6 lg:p-7 space-y-3.5 shadow-[0_4px_22px_rgba(43,29,23,0.04)] hover:shadow-[0_12px_32px_rgba(43,29,23,0.08)] hover:border-[#C48A5A]/50 transition-all duration-300 min-w-0"
             >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#EFE5D8] pb-3.5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#EBDDCF] pb-3.5">
                 <div className="flex items-center gap-3">
                   <div className="flex text-[#C48A5A]">
                     {[...Array(5)].map((_, i) => (
                       <Star
                         key={i}
-                        className={`w-3.5 h-3.5 ${i < rev.rating ? 'fill-[#C48A5A] text-[#C48A5A]' : 'text-[#E2D4C3]'}`}
+                        className={`w-3.5 sm:w-4 h-3.5 sm:h-4 ${i < rev.rating ? 'fill-[#C48A5A] text-[#C48A5A]' : 'text-[#EBDDCF]'}`}
                       />
                     ))}
                   </div>
-                  <h3 className="font-sans text-sm sm:text-base font-semibold text-[#1F140E]">
-                    {rev.title}
+                  <h3 className="font-serif text-[17px] sm:text-[19px] lg:text-[20px] font-normal text-[#1F140E] leading-snug">
+                    &ldquo;{rev.title}&rdquo;
                   </h3>
                 </div>
                 <span className="text-xs text-[#7A6253] font-medium">{rev.date}</span>
@@ -337,18 +337,18 @@ export const ReviewsPage: React.FC = () => {
                 </div>
               )}
 
-              <p className="text-xs text-[#523B2F] font-light leading-relaxed">
+              <p className="font-sans text-[13px] sm:text-[13.5px] text-[#3D2B22] font-normal leading-relaxed">
                 {rev.comment}
               </p>
 
-              <div className="flex items-center justify-between pt-2.5 text-xs">
-                <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between pt-3 border-t border-[#EBDDCF] text-xs flex-wrap gap-2">
+                <div className="flex items-center gap-2.5">
                   <span className="font-semibold text-[#1F140E]">{rev.author}</span>
                   <span className="text-[#7A6253]">&bull; {rev.city}</span>
                   {rev.verified && (
-                    <span className="inline-flex items-center gap-1 text-[10px] text-emerald-800 bg-emerald-50 px-2 py-0.5 border border-emerald-200">
-                      <CheckCircle2 className="w-3 h-3" />
-                      Verified Purchase
+                    <span className="inline-flex items-center gap-1 text-[9.5px] uppercase tracking-[0.12em] font-semibold text-[#9E6D42] border border-[#C8A98E] rounded-full px-2.5 py-0.5 bg-transparent">
+                      <CheckCircle2 className="w-3 h-3 text-[#9E6D42]" />
+                      <span>Verified</span>
                     </span>
                   )}
                 </div>

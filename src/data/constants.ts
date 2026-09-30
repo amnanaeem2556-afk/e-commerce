@@ -122,7 +122,7 @@ export const FAQS = [
     category: 'product',
     question: 'How do I choose the proper size for double-faced outerwear?',
     answer:
-      'Our garments are cut with modern architectural ease. We recommend selecting your true standard luxury size. You can consult our interactive Size Guide or click "Need Help?" to chat directly with an atelier stylist.',
+      'Our garments are cut with modern architectural ease. We recommend selecting your true standard luxury size. You can consult our interactive Size Guide or contact our Atelier Concierge to consult directly with a stylist.',
   },
 ];
 

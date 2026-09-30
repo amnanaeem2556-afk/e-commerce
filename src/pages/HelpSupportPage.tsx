@@ -90,16 +90,16 @@ export const HelpSupportPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 lg:py-14 space-y-10 sm:space-y-12 lg:space-y-16">
       {/* Header */}
       <div className="text-center max-w-2xl mx-auto space-y-3">
         <span className="text-[10.5px] uppercase tracking-[0.25em] text-[#C48A5A] font-semibold">
           Client Care & Concierge
         </span>
         <h1 className="font-heading text-3xl sm:text-4xl lg:text-5xl text-[#2B1D17] tracking-[0.03em] leading-none">
-          Help & Support
+          Help & <span className="text-[#C48A5A]">Support</span>
         </h1>
-        <p className="text-xs sm:text-sm text-[#6B4A3A] font-light leading-relaxed">
+        <p className="text-xs sm:text-sm text-[#4A3528] font-normal leading-relaxed">
           From nationwide white-glove deliveries to 30-day in-home returns, our Lahore salon concierge is at your service.
         </p>
 
@@ -117,46 +117,46 @@ export const HelpSupportPage: React.FC = () => {
       </div>
 
       {/* Quick Action Navigation Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
         <div
           onClick={() => setActiveCategory('shipping')}
-          className="bg-[#FAF6F0] border border-[#E7D6C1] p-5 text-center space-y-2 hover:border-[#6B4A3A] transition-colors cursor-pointer"
+          className="bg-[#FAF6F0] border border-[#E7D6C1] p-4 sm:p-5 text-center space-y-2 hover:border-[#6B4A3A] transition-colors cursor-pointer"
         >
           <Truck className="w-6 h-6 text-[#C48A5A] mx-auto" />
-          <h4 className="font-sans text-sm font-semibold text-[#2B1D17]">Shipping Help</h4>
+          <h4 className="font-sans text-xs sm:text-sm font-semibold text-[#2B1D17]">Shipping Help</h4>
           <p className="text-[11px] text-[#6B4A3A]">White-Glove TCS express details</p>
         </div>
 
         <div
           onClick={() => setActiveCategory('returns')}
-          className="bg-[#FAF6F0] border border-[#E7D6C1] p-5 text-center space-y-2 hover:border-[#6B4A3A] transition-colors cursor-pointer"
+          className="bg-[#FAF6F0] border border-[#E7D6C1] p-4 sm:p-5 text-center space-y-2 hover:border-[#6B4A3A] transition-colors cursor-pointer"
         >
           <RotateCcw className="w-6 h-6 text-[#C48A5A] mx-auto" />
-          <h4 className="font-sans text-sm font-semibold text-[#2B1D17]">30-Day Returns</h4>
+          <h4 className="font-sans text-xs sm:text-sm font-semibold text-[#2B1D17]">30-Day Returns</h4>
           <p className="text-[11px] text-[#6B4A3A]">Complimentary home pickup</p>
         </div>
 
         <div
           onClick={() => setActiveCategory('payment')}
-          className="bg-[#FAF6F0] border border-[#E7D6C1] p-5 text-center space-y-2 hover:border-[#6B4A3A] transition-colors cursor-pointer"
+          className="bg-[#FAF6F0] border border-[#E7D6C1] p-4 sm:p-5 text-center space-y-2 hover:border-[#6B4A3A] transition-colors cursor-pointer"
         >
           <CreditCard className="w-6 h-6 text-[#C48A5A] mx-auto" />
-          <h4 className="font-sans text-sm font-semibold text-[#2B1D17]">Payment Guides</h4>
+          <h4 className="font-sans text-xs sm:text-sm font-semibold text-[#2B1D17]">Payment Guides</h4>
           <p className="text-[11px] text-[#6B4A3A]">Easypaisa, JazzCash & 1Link</p>
         </div>
 
         <div
           onClick={() => setCurrentPage('order_tracking')}
-          className="bg-[#FAF6F0] border border-[#E7D6C1] p-5 text-center space-y-2 hover:border-[#6B4A3A] transition-colors cursor-pointer"
+          className="bg-[#FAF6F0] border border-[#E7D6C1] p-4 sm:p-5 text-center space-y-2 hover:border-[#6B4A3A] transition-colors cursor-pointer"
         >
           <Clock className="w-6 h-6 text-[#C48A5A] mx-auto" />
-          <h4 className="font-sans text-sm font-semibold text-[#2B1D17]">Live Order Tracking</h4>
+          <h4 className="font-sans text-xs sm:text-sm font-semibold text-[#2B1D17]">Live Order Tracking</h4>
           <p className="text-[11px] text-[#6B4A3A]">Check consignment by ID</p>
         </div>
       </div>
 
       {/* FAQs Section */}
-      <div className="space-y-8">
+      <div className="space-y-6 sm:space-y-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[#E7D6C1] pb-4">
           <div>
             <span className="text-[10px] uppercase tracking-widest text-[#C48A5A] font-semibold">
@@ -213,7 +213,7 @@ export const HelpSupportPage: React.FC = () => {
       </div>
 
       {/* Two-Column: Contact Concierge Form & Salon Location */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start border-t border-[#E7D6C1] pt-14">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-10 items-start border-t border-[#E7D6C1] pt-10 sm:pt-12 lg:pt-14">
         {/* Contact Form */}
         <div className="lg:col-span-7 bg-[#FAF6F0] border border-[#E7D6C1] p-6 sm:p-8 space-y-6">
           <div>
@@ -384,7 +384,7 @@ export const HelpSupportPage: React.FC = () => {
             <h4 className="font-sans text-sm sm:text-base font-semibold text-[#FAF6F0]">
               Instant WhatsApp Concierge
             </h4>
-            <p className="text-xs text-[#E7D6C1]/80 leading-relaxed font-light">
+            <p className="text-xs sm:text-[13px] text-[#E7D6C1] leading-relaxed font-normal">
               Connect with our live salon stylist for instant fabric swatches, high-resolution video consultations, and order updates.
             </p>
             <a

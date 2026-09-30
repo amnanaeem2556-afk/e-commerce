@@ -115,11 +115,11 @@ export const QuickViewModal: React.FC = () => {
             <p className="text-xs text-[#6B4A3A] mt-1 mb-4">{product.subtitle}</p>
 
             <div className="flex items-baseline gap-3 pb-4 border-b border-[#E7D6C1]/60">
-              <span className="text-xl font-bold text-[#2B1D17] tracking-tight">
+              <span className="text-xl font-bold text-[#2B1D17] tracking-normal">
                 {formatPKR(product.price)}
               </span>
               {product.oldPrice && (
-                <span className="text-sm text-[#6B4A3A]/60 line-through">
+                <span className="text-sm text-[#6B4A3A]/70 line-through">
                   {formatPKR(product.oldPrice)}
                 </span>
               )}
@@ -130,7 +130,7 @@ export const QuickViewModal: React.FC = () => {
               )}
             </div>
 
-            <p className="text-xs text-[#2B1D17]/80 line-clamp-3 mt-4 leading-relaxed font-light">
+            <p className="text-xs sm:text-[13px] text-[#2B1D17] line-clamp-3 mt-4 leading-relaxed font-normal">
               {product.description}
             </p>
 

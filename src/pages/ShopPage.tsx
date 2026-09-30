@@ -637,16 +637,16 @@ export const ShopPage: React.FC<ShopPageProps> = ({
   return (
     <div className="w-full">
       {/* Category Navigation Breadcrumb & Back to All */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-5 pb-3">
-        <div className="flex items-center justify-between text-xs text-[#6B4A3A]">
-          <div className="flex items-center gap-2 uppercase tracking-widest text-[11px]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-5 pb-3">
+        <div className="flex flex-wrap items-center justify-between gap-2.5 text-xs text-[#6B4A3A]">
+          <div className="flex items-center gap-1.5 sm:gap-2 uppercase tracking-widest text-[10px] sm:text-[11px] flex-wrap">
             <button
               onClick={() => setCurrentPage('home')}
               className="hover:text-[#2B1D17] transition-colors cursor-pointer"
             >
               Home
             </button>
-            <span>/</span>
+            <span className="text-[#C48A5A]">•</span>
             <button
               onClick={() => handleCategorySwitch(null)}
               className={`transition-colors cursor-pointer ${
@@ -657,7 +657,7 @@ export const ShopPage: React.FC<ShopPageProps> = ({
             </button>
             {breadcrumbCurrent && (
               <>
-                <span>/</span>
+                <span className="text-[#C48A5A]">•</span>
                 <span className="text-[#2B1D17] font-bold tracking-wider uppercase">
                   {breadcrumbCurrent}
                 </span>
@@ -671,13 +671,13 @@ export const ShopPage: React.FC<ShopPageProps> = ({
                 handleCategorySwitch(null);
                 setFilters((p) => ({ ...p, discountOnly: false, newOnly: false, subCategory: '' }));
               }}
-              className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-[#C48A5A] hover:text-[#2B1D17] font-medium transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 text-[10.5px] sm:text-[11px] uppercase tracking-wider text-[#C48A5A] hover:text-[#2B1D17] font-medium transition-colors cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Return to All Catalog</span>
             </button>
           ) : (
-            <span className="text-[11px] uppercase tracking-wider text-[#6B4A3A]">
+            <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-[#6B4A3A]">
               Showing all salons ({PRODUCTS.length} creations)
             </span>
           )}
@@ -726,11 +726,11 @@ export const ShopPage: React.FC<ShopPageProps> = ({
         )}
 
       {/* Filter & Sort Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-8 pb-4 border-b border-[#E7D6C1]">
+      <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8 pb-3 sm:pb-4 border-b border-[#E7D6C1]">
         {/* Mobile Filter Button */}
         <button
           onClick={() => setIsMobileFiltersOpen(true)}
-          className="lg:hidden flex items-center gap-2 bg-[#2B1D17] text-[#FAF6F0] px-4 py-2.5 text-xs tracking-wider uppercase font-medium"
+          className="lg:hidden flex items-center gap-2 bg-[#2B1D17] text-[#FAF6F0] px-4 py-2.5 text-xs tracking-wider uppercase font-medium shadow-xs"
         >
           <SlidersHorizontal className="w-3.5 h-3.5" />
           <span>Refine ({filteredProducts.length})</span>
@@ -809,9 +809,9 @@ export const ShopPage: React.FC<ShopPageProps> = ({
       </div>
 
       {/* Main Layout: Desktop Sidebar + Product Grid */}
-      <div className="flex gap-8 items-start">
+      <div className="flex gap-6 lg:gap-8 items-start">
         {/* Desktop Sidebar Filters */}
-        <aside className="hidden lg:block w-64 shrink-0 bg-white border border-[#E2D4C3] p-5 sticky top-24 shadow-[0_4px_24px_rgba(43,29,23,0.06)]">
+        <aside className="hidden lg:block w-64 shrink-0 bg-white border border-[#E2D4C3] p-5 sticky top-20 shadow-[0_4px_24px_rgba(43,29,23,0.06)]">
           <div className="flex items-center justify-between pb-3 border-b border-[#EFE5D8] mb-5">
             <span className="font-sans text-base font-semibold text-[#1F140E]">Refine Atelier</span>
             <SlidersHorizontal className="w-4 h-4 text-[#7A6253]" />
@@ -822,7 +822,7 @@ export const ShopPage: React.FC<ShopPageProps> = ({
         {/* Product Cards Grid: Desktop 4, Tablet 3, Mobile 2 */}
         <div className="flex-1">
           {filteredProducts.length === 0 ? (
-            <div className="py-20 text-center bg-white border border-[#E2D4C3] p-8 shadow-xs">
+            <div className="py-16 sm:py-20 text-center bg-white border border-[#E2D4C3] p-6 sm:p-8 shadow-xs">
               <h3 className="font-heading text-2xl sm:text-3xl text-[#1F140E] tracking-[0.03em] leading-none">No Products Found</h3>
               <p className="text-xs text-[#523B2F] mt-2 max-w-sm mx-auto">
                 No pieces found matching your specific size, color, or price refinements within this category.
@@ -835,7 +835,7 @@ export const ShopPage: React.FC<ShopPageProps> = ({
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-5 xl:gap-6">
               {filteredProducts.map((product, idx) => (
                 <ProductCard key={product.id} product={product} priority={idx < 8} />
               ))}
@@ -846,65 +846,80 @@ export const ShopPage: React.FC<ShopPageProps> = ({
 
       {/* CATEGORY-SPECIFIC REVIEWS SECTION */}
       {categoryReviews.length > 0 && (
-        <section className="mt-20 pt-12 border-t border-[#E2D4C3]">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+        <section className="mt-12 sm:mt-16 lg:mt-20 pt-8 sm:pt-12 border-t border-[#EBDDCF]">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-10">
             <div>
-              <span className="text-[10px] uppercase tracking-[0.25em] text-[#A66838] font-semibold">
-                Verified Atelier Patrons
-              </span>
-              <h2 className="font-heading text-3xl sm:text-4xl text-[#1F140E] tracking-[0.03em] leading-none mt-1">
-                {categoryMeta ? `${categoryMeta.name} Reviews` : 'Customer Reviews'}
+              <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl text-[#1F140E] tracking-[0.03em] leading-none mt-1">
+                {categoryMeta ? (
+                  <>
+                    <span>{categoryMeta.name}</span> <span className="text-[#A66838]">Reviews</span>
+                  </>
+                ) : (
+                  <>
+                    Client <span className="text-[#A66838]">Reviews</span>
+                  </>
+                )}
               </h2>
-              <p className="text-xs text-[#523B2F] mt-1">
+              <p className="text-xs sm:text-sm text-[#523B2F] mt-1.5 leading-relaxed">
                 Authentic perspectives on tactile materials, tailored drape, and horological precision.
               </p>
             </div>
 
             <div className="flex items-center gap-2 text-xs text-[#1F140E]">
-              <div className="flex text-[#A66838]">
+              <div className="flex text-[#C48A5A]">
                 {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-3.5 h-3.5 fill-current" />
+                  <Star key={i} className="w-3.5 sm:w-4 h-3.5 sm:h-4 fill-[#C48A5A] text-[#C48A5A]" />
                 ))}
               </div>
-              <span className="font-semibold">4.9 / 5.0 Average Satisfaction</span>
+              <span className="font-semibold text-xs sm:text-sm">4.9 / 5.0 Average Satisfaction</span>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6 items-stretch">
             {categoryReviews.slice(0, 3).map((rev) => {
               const matchedProduct = PRODUCTS.find((p) => p.id === rev.productId);
               return (
                 <div
                   key={rev.id}
-                  className="bg-white border border-[#E2D4C3] p-6 flex flex-col justify-between shadow-xs hover:border-[#A66838] transition-all"
+                  className="bg-[#FAF6F0] rounded-[20px] sm:rounded-[22px] border border-[#EBDDCF] p-5 sm:p-6 lg:p-7 flex flex-col justify-between shadow-[0_4px_22px_rgba(43,29,23,0.04)] hover:shadow-[0_12px_32px_rgba(43,29,23,0.08)] hover:border-[#C48A5A]/50 transition-all duration-300 min-w-0"
                 >
                   <div>
-                    <div className="flex items-center justify-between gap-2 mb-3">
-                      <div className="flex text-[#A66838]">
+                    {/* Top Row: Stars + Classical Quotation Mark */}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-1.5 text-[#C48A5A]">
                         {[...Array(rev.rating)].map((_, i) => (
-                          <Star key={i} className="w-3.5 h-3.5 fill-current" />
+                          <Star key={i} className="w-3.5 sm:w-4 h-3.5 sm:h-4 fill-[#C48A5A] text-[#C48A5A]" />
                         ))}
                       </div>
-                      <span className="text-[10px] text-[#7A6253] font-medium">{rev.date}</span>
+                      <span className="font-serif text-3xl sm:text-4xl text-[#D8C7B5] leading-none select-none font-normal" aria-hidden="true">
+                        &rdquo;
+                      </span>
                     </div>
 
-                    <h4 className="font-sans text-sm font-semibold text-[#1F140E] mb-2 leading-snug">
-                      "{rev.title}"
+                    {/* Classical Serif Title */}
+                    <h4 className="font-serif text-[18px] sm:text-[20px] lg:text-[21px] font-normal text-[#1F140E] mb-2 leading-snug tracking-normal">
+                      &ldquo;{rev.title}&rdquo;
                     </h4>
 
-                    <p className="text-xs text-[#3D2B22] leading-relaxed mb-4 font-light">
+                    {/* Review Excerpt */}
+                    <p className="font-sans text-[13px] sm:text-[13.5px] text-[#3D2B22] font-normal leading-relaxed mb-5 break-words">
                       {rev.comment}
                     </p>
                   </div>
 
-                  <div className="pt-4 border-t border-[#EFE5D8] flex items-center justify-between">
-                    <div>
-                      <p className="text-xs font-semibold text-[#1F140E]">{rev.author}</p>
-                      <p className="text-[10px] text-[#7A6253]">{rev.city}</p>
+                  {/* Bottom Row with Patron Info & Verified Badge */}
+                  <div className="pt-4 sm:pt-5 border-t border-[#EBDDCF] flex items-center justify-between gap-2.5 flex-wrap mt-auto">
+                    <div className="min-w-0">
+                      <p className="font-sans font-medium text-[13px] sm:text-[13.5px] text-[#1F140E] leading-tight">
+                        {rev.author}
+                      </p>
+                      <p className="font-sans text-[11px] text-[#8C7667] mt-1 leading-tight">
+                        {rev.city} • <span className="text-[#C48A5A]">{rev.date}</span>
+                      </p>
                     </div>
 
                     {matchedProduct && (
-                      <span className="text-[10px] bg-[#FAF6F0] border border-[#E2D4C3] px-2 py-0.5 text-[#1F140E] truncate max-w-[120px] font-medium">
+                      <span className="text-[10px] bg-white border border-[#E2D4C3] px-2.5 py-1 text-[#1F140E] rounded-[4px] font-medium shadow-2xs">
                         {matchedProduct.name}
                       </span>
                     )}

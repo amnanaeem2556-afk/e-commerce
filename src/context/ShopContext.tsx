@@ -25,8 +25,6 @@ interface ShopContextType {
   setIsSearchOpen: (open: boolean) => void;
   quickViewProduct: Product | null;
   setQuickViewProduct: (product: Product | null) => void;
-  isFeedbackOpen: boolean;
-  setIsFeedbackOpen: (open: boolean) => void;
   isSizeGuideOpen: boolean;
   setIsSizeGuideOpen: (open: boolean) => void;
   isMobileMenuOpen: boolean;
@@ -64,7 +62,15 @@ interface ShopContextType {
   createOrder: (newOrder: Order) => Promise<Order>;
   placeOrder: (newOrder: Order) => Promise<Order>;
   findOrder: (orderNumber: string, email?: string) => Order | undefined;
-  updateOrderStatus: (orderId: string, status: string, courierName?: string, trackingNumber?: string, paymentStatus?: string) => Promise<{ success: boolean; order?: Order; error?: string }>;
+  updateOrderStatus: (orderId: string, status: string, courierName?: string, trackingNumber?: string, paymentStatus?: string) => Promise<{
+    success: boolean;
+    order?: Order;
+    error?: string;
+    statusEmailSent?: boolean;
+    statusEmailProvider?: string;
+    statusEmailMessageId?: string;
+    statusEmailError?: string;
+  }>;
   refreshOrders: () => Promise<void>;
 
   // Toast
@@ -76,12 +82,76 @@ interface ShopContextType {
 const ShopContext = createContext<ShopContextType | undefined>(undefined);
 
 export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentPage, setCurrentPage] = useState<PageType>('home');
+  const getInitialPage = (): PageType => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const pageParam = params.get('page');
+      if (pageParam === 'order_tracking' || pageParam === 'track' || pageParam === 'tracking') {
+        return 'order_tracking';
+      }
+      if (params.get('orderId') || params.get('orderNumber')) {
+        return 'order_tracking';
+      }
+      if (
+        pageParam &&
+        [
+          'home',
+          'shop',
+          'women',
+          'men',
+          'watches',
+          'shoes',
+          'accessories',
+          'new_arrivals',
+          'sale',
+          'cart',
+          'wishlist',
+          'checkout',
+          'order_success',
+          'order_tracking',
+          'admin',
+          'reviews',
+          'about',
+          'help_support'
+        ].includes(pageParam)
+      ) {
+        return pageParam as PageType;
+      }
+      if (window.location.hash.includes('order_tracking') || window.location.hash.includes('track')) {
+        return 'order_tracking';
+      }
+    }
+    return 'home';
+  };
+
+  const [currentPage, setCurrentPageRaw] = useState<PageType>(getInitialPage);
+
+  const setCurrentPage = (page: PageType) => {
+    setCurrentPageRaw(page);
+    try {
+      const url = new URL(window.location.href);
+      if (page === 'home') {
+        url.searchParams.delete('page');
+      } else {
+        url.searchParams.set('page', page);
+      }
+      window.history.pushState({}, '', url.toString());
+    } catch {}
+  };
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const freshPage = getInitialPage();
+      setCurrentPageRaw(freshPage);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product>(PRODUCTS[0]);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
-  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -454,7 +524,15 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
     courierName?: string,
     trackingNumber?: string,
     paymentStatus?: string
-  ): Promise<{ success: boolean; order?: Order; error?: string }> => {
+  ): Promise<{
+    success: boolean;
+    order?: Order;
+    error?: string;
+    statusEmailSent?: boolean;
+    statusEmailProvider?: string;
+    statusEmailMessageId?: string;
+    statusEmailError?: string;
+  }> => {
     try {
       const res = await fetch(`/api/admin/orders/${encodeURIComponent(orderId)}/status`, {
         method: 'PATCH',
@@ -473,9 +551,22 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setOrders(prev => prev.map(o => (o.id === targetId || o.id === orderId ? updated : o)));
         setLatestOrder(prev => (prev && (prev.id === targetId || prev.id === orderId) ? updated : prev));
         window.dispatchEvent(new CustomEvent('lumora:order_updated', { detail: updated }));
-        return { success: true, order: updated };
+        return {
+          success: true,
+          order: updated,
+          statusEmailSent: data.statusEmailSent,
+          statusEmailProvider: data.statusEmailProvider,
+          statusEmailMessageId: data.statusEmailMessageId,
+          statusEmailError: data.statusEmailError
+        };
       }
-      return { success: true };
+      return {
+        success: true,
+        statusEmailSent: data.statusEmailSent,
+        statusEmailProvider: data.statusEmailProvider,
+        statusEmailMessageId: data.statusEmailMessageId,
+        statusEmailError: data.statusEmailError
+      };
     } catch (err: any) {
       console.error('Error in updateOrderStatus:', err);
       return { success: false, error: err.message || 'Network error updating order status.' };
@@ -511,8 +602,6 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsSearchOpen,
         quickViewProduct,
         setQuickViewProduct,
-        isFeedbackOpen,
-        setIsFeedbackOpen,
         isSizeGuideOpen,
         setIsSizeGuideOpen,
         isMobileMenuOpen,

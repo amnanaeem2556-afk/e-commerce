@@ -37,8 +37,8 @@ export const SizeGuideModal: React.FC = () => {
         </p>
 
         {/* Tab Selection */}
-        <div className="flex items-center justify-between border-b border-[#E7D6C1] pb-3 mb-6">
-          <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E7D6C1] pb-3 mb-6">
+          <div className="flex flex-wrap gap-2 sm:gap-4">
             {[
               { id: 'apparel', label: 'Apparel & Outerwear' },
               { id: 'shoes', label: 'Footwear & Loafers' },

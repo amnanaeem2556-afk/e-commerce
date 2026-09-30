@@ -11,14 +11,10 @@ export default defineConfig(() => {
       {
         name: 'api-server',
         configureServer(server) {
-          let appPromise: Promise<any> | null = null;
           server.middlewares.use(async (req, res, next) => {
             if (req.url && req.url.startsWith('/api')) {
               try {
-                if (!appPromise) {
-                  appPromise = import('./server/index.ts');
-                }
-                const { app } = await appPromise;
+                const { app } = await server.ssrLoadModule('./server/index.ts');
                 return app(req, res, next);
               } catch (err) {
                 console.error('[AI Studio] API error:', err);

@@ -22,7 +22,7 @@ import { INITIAL_REVIEWS } from '../data/reviews';
 import { PRODUCTS } from '../data/products';
 import { ProductCard } from '../components/ProductCard';
 import { formatPKR } from '../data/constants';
-import { getOptimizedImageUrl } from '../utils/imageOptimizer';
+import { getOptimizedImageUrl, getResponsiveSrcSet } from '../utils/imageOptimizer';
 
 export const ProductDetailPage: React.FC = () => {
   const {
@@ -169,104 +169,107 @@ export const ProductDetailPage: React.FC = () => {
   }));
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-16">
-      {/* Breadcrumbs */}
-      <nav className="text-[11px] text-[#6B4A3A] flex items-center gap-2 uppercase tracking-widest">
-        <button onClick={() => setCurrentPage('home')} className="hover:text-[#2B1D17]">
-          Home
-        </button>
-        <span>/</span>
-        <button
-          onClick={() => {
-            setSelectedCategoryFilter(product.category);
-            setCurrentPage(product.category as PageType);
-          }}
-          className="hover:text-[#2B1D17]"
-        >
-          {product.category}
-        </button>
-        <span>/</span>
-        <span className="text-[#2B1D17] font-semibold truncate max-w-xs">{product.name}</span>
-      </nav>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-7 lg:py-10 space-y-12 sm:space-y-16 lg:space-y-20">
+      <div>
+        {/* Breadcrumbs */}
+        <nav className="text-[11px] text-[#6B4A3A] flex items-center gap-2 uppercase tracking-widest mb-6 sm:mb-8">
+          <button onClick={() => setCurrentPage('home')} className="hover:text-[#2B1D17] transition-colors cursor-pointer">
+            Home
+          </button>
+          <span>/</span>
+          <button
+            onClick={() => {
+              setSelectedCategoryFilter(product.category);
+              setCurrentPage(product.category as PageType);
+            }}
+            className="hover:text-[#2B1D17] transition-colors cursor-pointer"
+          >
+            {product.category}
+          </button>
+          <span>/</span>
+          <span className="text-[#2B1D17] font-semibold truncate max-w-xs">{product.name}</span>
+        </nav>
 
-      {/* Main Two-Column Atelier Product Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14">
-        {/* LEFT: IMAGE GALLERY (6-8 images, thumbnails, zoom, lightbox) */}
-        <div className="lg:col-span-7 flex flex-col-reverse md:flex-row gap-4 items-start">
-          {/* Thumbnails (vertical on desktop, horizontal on mobile) */}
-          <div className="flex md:flex-col gap-2 overflow-x-auto md:overflow-y-auto w-full md:w-20 shrink-0 pb-2 md:pb-0 max-h-[640px]">
-            {product.images.map((img, idx) => (
-              <button
-                key={idx}
-                onClick={() => setActiveImageIndex(idx)}
-                className={`relative aspect-[3/4] w-16 md:w-full overflow-hidden border transition-all cursor-pointer ${
-                  activeImageIndex === idx
-                    ? 'border-[#2B1D17] ring-1 ring-[#2B1D17]'
-                    : 'border-[#E7D6C1] opacity-70 hover:opacity-100'
-                }`}
+        {/* Main Two-Column Atelier Product Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 xl:gap-14">
+          {/* LEFT: IMAGE GALLERY (6-8 images, thumbnails, zoom, lightbox) */}
+          <div className="lg:col-span-7 flex flex-col-reverse md:flex-row gap-3 sm:gap-4 items-start">
+            {/* Thumbnails (vertical on desktop, horizontal on mobile) */}
+            <div className="flex md:flex-col gap-2 overflow-x-auto md:overflow-y-auto w-full md:w-20 shrink-0 pb-2 md:pb-0 max-h-[640px] scrollbar-none">
+              {product.images.map((img, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setActiveImageIndex(idx)}
+                  className={`relative aspect-[3/4] w-14 sm:w-16 md:w-full overflow-hidden border transition-all cursor-pointer shrink-0 ${
+                    activeImageIndex === idx
+                      ? 'border-[#2B1D17] ring-1 ring-[#2B1D17]'
+                      : 'border-[#E7D6C1] opacity-70 hover:opacity-100'
+                  }`}
+                >
+                  <img
+                    src={getOptimizedImageUrl(img, 160, 80)}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                    referrerPolicy="no-referrer"
+                    className="w-full h-full object-cover object-center"
+                  />
+                </button>
+              ))}
+            </div>
+
+            {/* Main Large Image Stage with Hover Zoom */}
+            <div className="flex-1 w-full relative">
+              <div
+                className="relative aspect-[3/4] w-full overflow-hidden bg-[#E7D6C1]/20 border border-[#E7D6C1]/60 cursor-crosshair group"
+                onMouseEnter={() => setIsZooming(true)}
+                onMouseLeave={() => setIsZooming(false)}
+                onMouseMove={handleMouseMove}
+                onClick={() => setIsLightboxOpen(true)}
               >
                 <img
-                  src={getOptimizedImageUrl(img, 160, 80)}
-                  alt=""
-                  loading="lazy"
+                  src={getOptimizedImageUrl(product.images[activeImageIndex], 1000, 85)}
+                  srcSet={getResponsiveSrcSet(product.images[activeImageIndex], [480, 720, 1000, 1200])}
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  alt={product.name}
+                  loading="eager"
                   decoding="async"
+                  fetchPriority="high"
                   referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover object-center"
+                  className={`w-full h-full object-cover object-center transition-transform duration-300 ${
+                    isZooming ? 'scale-150' : 'scale-100'
+                  }`}
+                  style={
+                    isZooming
+                      ? {
+                          transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`
+                        }
+                      : undefined
+                  }
                 />
-              </button>
-            ))}
-          </div>
 
-          {/* Main Large Image Stage with Hover Zoom */}
-          <div className="flex-1 w-full relative">
-            <div
-              className="relative aspect-[3/4] w-full overflow-hidden bg-[#E7D6C1]/20 border border-[#E7D6C1]/60 cursor-crosshair group"
-              onMouseEnter={() => setIsZooming(true)}
-              onMouseLeave={() => setIsZooming(false)}
-              onMouseMove={handleMouseMove}
-              onClick={() => setIsLightboxOpen(true)}
-            >
-              <img
-                src={getOptimizedImageUrl(product.images[activeImageIndex], 1000, 85)}
-                alt={product.name}
-                loading="eager"
-                decoding="async"
-                fetchPriority="high"
-                referrerPolicy="no-referrer"
-                className={`w-full h-full object-cover object-center transition-transform duration-300 ${
-                  isZooming ? 'scale-150' : 'scale-100'
-                }`}
-                style={
-                  isZooming
-                    ? {
-                        transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`
-                      }
-                    : undefined
-                }
-              />
+                {/* Fullscreen icon button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsLightboxOpen(true);
+                  }}
+                  className="absolute bottom-4 right-4 p-2 bg-[#FAF6F0]/90 backdrop-blur-xs text-[#2B1D17] hover:bg-[#2B1D17] hover:text-[#FAF6F0] transition-colors shadow-md"
+                  aria-label="Fullscreen Gallery"
+                >
+                  <Maximize2 className="w-4 h-4" />
+                </button>
 
-              {/* Fullscreen icon button */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsLightboxOpen(true);
-                }}
-                className="absolute bottom-4 right-4 p-2 bg-[#FAF6F0]/90 backdrop-blur-xs text-[#2B1D17] hover:bg-[#2B1D17] hover:text-[#FAF6F0] transition-colors shadow-md"
-                aria-label="Fullscreen Gallery"
-              >
-                <Maximize2 className="w-4 h-4" />
-              </button>
-
-              {/* Hint badge */}
-              <div className="absolute top-4 left-4 bg-[#2B1D17]/80 text-[#FAF6F0] text-[9.5px] uppercase tracking-widest px-2.5 py-1 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
-                Hover to Zoom &bull; Click for Fullscreen
+                {/* Hint badge */}
+                <div className="absolute top-4 left-4 bg-[#2B1D17]/80 text-[#FAF6F0] text-[9.5px] uppercase tracking-widest px-2.5 py-1 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+                  Hover to Zoom &bull; Click for Fullscreen
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* RIGHT: EDITORIAL DETAILS & CONTROLS */}
-        <div className="lg:col-span-5 flex flex-col justify-start space-y-6">
+          {/* RIGHT: EDITORIAL DETAILS & CONTROLS */}
+          <div className="lg:col-span-5 flex flex-col justify-start space-y-5 sm:space-y-6">
           {/* Header & Badges */}
           <div className="space-y-2 border-b border-[#E7D6C1]/60 pb-5">
             <div className="flex items-center justify-between">
@@ -308,11 +311,11 @@ export const ProductDetailPage: React.FC = () => {
 
             {/* Price Display */}
             <div className="flex items-baseline gap-3 pt-3">
-              <span className="font-sans text-2xl sm:text-3xl font-bold text-[#2B1D17] tracking-tight">
+              <span className="font-sans text-2xl sm:text-3xl font-bold text-[#2B1D17] tracking-normal">
                 {formatPKR(product.price)}
               </span>
               {product.oldPrice && (
-                <span className="text-sm sm:text-base text-[#6B4A3A]/60 line-through">
+                <span className="text-sm sm:text-base text-[#6B4A3A]/70 line-through">
                   {formatPKR(product.oldPrice)}
                 </span>
               )}
@@ -323,13 +326,13 @@ export const ProductDetailPage: React.FC = () => {
               )}
             </div>
 
-            <p className="text-xs text-[#6B4A3A] font-light">
+            <p className="text-xs sm:text-[13px] text-[#523B2F] font-normal">
               Taxes included. Hand-delivered in signature archival gift box.
             </p>
           </div>
 
           {/* Short Luxury Description */}
-          <p className="text-xs sm:text-sm text-[#2B1D17]/85 font-light leading-relaxed">
+          <p className="text-sm sm:text-[15px] text-[#2B1D17] font-normal leading-relaxed">
             {product.description}
           </p>
 
@@ -458,7 +461,7 @@ export const ProductDetailPage: React.FC = () => {
                 id: 'details',
                 title: 'Product Details & Silhouette',
                 content: (
-                  <div className="space-y-2 text-xs text-[#2B1D17]/85 leading-relaxed font-light">
+                  <div className="space-y-2 text-xs sm:text-[13.5px] text-[#2B1D17] leading-relaxed font-normal">
                     <p>{product.description}</p>
                     <p><strong>Atelier Cut:</strong> Regular refined drape designed to layer smoothly.</p>
                     <p><strong>Finished:</strong> Hand-inspected with serial numbering tag.</p>
@@ -469,7 +472,7 @@ export const ProductDetailPage: React.FC = () => {
                 id: 'material',
                 title: 'Material & Craftsmanship Origin',
                 content: (
-                  <div className="space-y-2 text-xs text-[#2B1D17]/85 leading-relaxed font-light">
+                  <div className="space-y-2 text-xs sm:text-[13.5px] text-[#2B1D17] leading-relaxed font-normal">
                     <p><strong>Primary Composition:</strong> {product.details.material}</p>
                     <p><strong>Origin:</strong> {product.details.origin}</p>
                     <p>Harvested and woven following strict European OEKO-TEX® standards.</p>
@@ -480,7 +483,7 @@ export const ProductDetailPage: React.FC = () => {
                 id: 'care',
                 title: 'Care Instructions',
                 content: (
-                  <div className="text-xs text-[#2B1D17]/85 leading-relaxed font-light">
+                  <div className="text-xs sm:text-[13.5px] text-[#2B1D17] leading-relaxed font-normal">
                     <p>{product.details.care}</p>
                   </div>
                 )
@@ -489,7 +492,7 @@ export const ProductDetailPage: React.FC = () => {
                 id: 'shipping',
                 title: 'Delivery & White-Glove Shipping',
                 content: (
-                  <div className="space-y-2 text-xs text-[#2B1D17]/85 leading-relaxed font-light">
+                  <div className="space-y-2 text-xs sm:text-[13.5px] text-[#2B1D17] leading-relaxed font-normal">
                     <p>{product.details.delivery}</p>
                     <p><strong>Domestic Timeline:</strong> 2-3 business days across Karachi, Lahore, Islamabad, Faisalabad, and Rawalpindi. Tracked at every transit checkpoint.</p>
                   </div>
@@ -499,7 +502,7 @@ export const ProductDetailPage: React.FC = () => {
                 id: 'returns',
                 title: 'Returns & Exchanges Policy',
                 content: (
-                  <div className="text-xs text-[#2B1D17]/85 leading-relaxed font-light">
+                  <div className="text-xs sm:text-[13.5px] text-[#2B1D17] leading-relaxed font-normal">
                     <p>{product.details.returns}</p>
                   </div>
                 )
@@ -526,6 +529,7 @@ export const ProductDetailPage: React.FC = () => {
             ))}
           </div>
         </div>
+      </div>
       </div>
 
       {/* FULLSCREEN LIGHTBOX MODAL */}
@@ -569,8 +573,8 @@ export const ProductDetailPage: React.FC = () => {
       )}
 
       {/* REVIEWS SECTION: Breakdown & Review Form */}
-      <section id="customer-reviews" className="border-t border-[#E7D6C1] pt-14 space-y-10">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+      <section id="customer-reviews" className="border-t border-[#E7D6C1] pt-10 sm:pt-12 lg:pt-14 space-y-8 sm:space-y-10">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 sm:gap-6">
           <div>
             <span className="text-[10px] uppercase tracking-[0.25em] text-[#C48A5A] font-semibold">
               Client Authenticity
@@ -592,7 +596,7 @@ export const ProductDetailPage: React.FC = () => {
         <div className="bg-white border border-[#E2D4C3] p-6 sm:p-8 grid grid-cols-1 md:grid-cols-12 gap-8 items-center shadow-[0_4px_24px_rgba(43,29,23,0.06)]">
           {/* Rating Score */}
           <div className="md:col-span-4 text-center md:text-left border-b md:border-b-0 md:border-r border-[#EFE5D8] pb-6 md:pb-0 md:pr-8">
-            <div className="font-sans text-5xl font-bold text-[#1F140E] tracking-tight">
+            <div className="font-sans text-5xl font-bold text-[#1F140E] tracking-normal">
               {avgRating.toFixed(1)} <span className="text-xl text-[#7A6253] font-normal">/ 5</span>
             </div>
             <div className="flex items-center justify-center md:justify-start text-[#A66838] gap-1 my-2">
@@ -604,7 +608,7 @@ export const ProductDetailPage: React.FC = () => {
               ))}
             </div>
             <p className="text-xs text-[#523B2F]">
-              Based on {ratingsCount} verified patron appraisals
+              Based on {ratingsCount} verified reviews
             </p>
           </div>
 
@@ -776,7 +780,7 @@ export const ProductDetailPage: React.FC = () => {
                 <span className="text-[11px] text-[#7A6253] font-medium">{rev.date}</span>
               </div>
 
-              <p className="text-xs text-[#3D2B22] leading-relaxed font-light">
+              <p className="text-xs sm:text-[13px] text-[#2B1D17] leading-relaxed font-normal">
                 {rev.comment}
               </p>
 
@@ -809,26 +813,26 @@ export const ProductDetailPage: React.FC = () => {
       </section>
 
       {/* YOU MAY ALSO ADMIRE (Related Products) */}
-      <section className="border-t border-[#E7D6C1] pt-14 space-y-8">
+      <section className="border-t border-[#E7D6C1] pt-10 sm:pt-12 lg:pt-14 space-y-6 sm:space-y-8">
         <div className="flex justify-between items-end">
           <div>
             <span className="text-[10px] uppercase tracking-[0.25em] text-[#C48A5A] font-semibold">
               Curated Accompaniments
             </span>
-            <h2 className="font-heading text-3xl sm:text-4xl text-[#2B1D17] tracking-[0.03em] leading-none mt-1">
+            <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl text-[#2B1D17] tracking-[0.03em] leading-none mt-1">
               Related <span className="text-[#C48A5A]">Products</span>
             </h2>
           </div>
           <button
             onClick={() => setCurrentPage('shop')}
-            className="text-xs uppercase tracking-widest text-[#2B1D17] hover:text-[#C48A5A] flex items-center gap-1 font-semibold"
+            className="text-xs uppercase tracking-widest text-[#2B1D17] hover:text-[#C48A5A] flex items-center gap-1 font-semibold cursor-pointer"
           >
             <span>View Full Edit</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
           {related.map((p) => (
             <ProductCard key={p.id} product={p} />
           ))}

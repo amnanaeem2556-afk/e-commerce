@@ -191,9 +191,9 @@ export const CheckoutPage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
       {/* Checkout Progress Stepper */}
-      <div className="max-w-2xl mx-auto mb-12">
+      <div className="max-w-2xl mx-auto mb-8 sm:mb-10 lg:mb-12">
         <div className="flex items-center justify-between text-xs font-semibold">
           {[
             { step: 1, label: '1. Shipping Atelier' },
@@ -214,7 +214,7 @@ export const CheckoutPage: React.FC = () => {
               }`}
             >
               <span
-                className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold ${
+                className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${
                   currentStep === s.step
                     ? 'bg-[#2B1D17] text-[#FAF6F0]'
                     : currentStep > s.step
@@ -228,7 +228,7 @@ export const CheckoutPage: React.FC = () => {
             </div>
           ))}
         </div>
-        <div className="w-full bg-[#E7D6C1]/50 h-1 mt-4 relative">
+        <div className="w-full bg-[#E7D6C1]/50 h-1 mt-3 sm:mt-4 relative">
           <div
             className="bg-[#2B1D17] h-full transition-all duration-300"
             style={{
@@ -238,9 +238,9 @@ export const CheckoutPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-10 items-start">
         {/* LEFT COLUMN: FORM STEPS */}
-        <div className="lg:col-span-7 space-y-8">
+        <div className="lg:col-span-7 space-y-6 sm:space-y-8">
           {/* STEP 1: SHIPPING INFORMATION */}
           {currentStep === 1 && (
             <div className="bg-white border border-[#E2D4C3] p-6 sm:p-8 space-y-6 shadow-[0_4px_24px_rgba(43,29,23,0.06)] animate-fadeIn">
@@ -844,7 +844,7 @@ export const CheckoutPage: React.FC = () => {
         </div>
 
         {/* RIGHT COLUMN: ORDER REVIEW SUMMARY */}
-        <div className="lg:col-span-5 bg-white border border-[#E2D4C3] p-6 sm:p-7 space-y-6 sticky top-28 shadow-[0_4px_24px_rgba(43,29,23,0.06)]">
+        <div className="lg:col-span-5 bg-white border border-[#E2D4C3] p-5 sm:p-7 space-y-5 sm:space-y-6 sticky top-20 shadow-[0_4px_24px_rgba(43,29,23,0.06)]">
           <div className="flex items-center justify-between border-b border-[#EFE5D8] pb-4">
             <h3 className="font-heading text-2xl sm:text-3xl text-[#1F140E] tracking-[0.03em] leading-none">
               Order Summary

@@ -63,7 +63,7 @@ export const SearchModal: React.FC = () => {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search by garment, fabric, watch or shade..."
-            className="flex-1 bg-transparent text-base sm:text-lg text-[#2B1D17] placeholder:text-[#6B4A3A]/50 focus:outline-none font-sans font-medium tracking-tight"
+            className="flex-1 bg-transparent text-base sm:text-lg text-[#2B1D17] placeholder:text-[#6B4A3A]/60 focus:outline-none font-sans font-medium tracking-normal"
           />
           {query && (
             <button
@@ -129,10 +129,10 @@ export const SearchModal: React.FC = () => {
                         <span className="text-[10px] uppercase tracking-widest text-[#C48A5A] font-medium">
                           {item.category}
                         </span>
-                        <h4 className="font-sans text-sm sm:text-base text-[#2B1D17] group-hover:text-[#6B4A3A] truncate font-semibold tracking-tight">
+                        <h4 className="font-sans text-sm sm:text-base text-[#2B1D17] group-hover:text-[#6B4A3A] font-semibold tracking-normal break-words">
                           {item.name}
                         </h4>
-                        <p className="text-xs text-[#6B4A3A]/80 truncate">{item.subtitle}</p>
+                        <p className="text-xs text-[#6B4A3A]/80 break-words">{item.subtitle}</p>
                       </div>
                       <div className="text-right shrink-0">
                         <span className="text-sm font-semibold text-[#2B1D17]">

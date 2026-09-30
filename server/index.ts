@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -5,7 +8,14 @@ import rateLimit from 'express-rate-limit';
 import { PrismaClient } from '@prisma/client';
 import { PRODUCTS } from '../src/data/products.ts';
 import { MOCK_PAST_ORDERS } from '../src/data/constants.ts';
-import { sendOrderConfirmationEmail, getEmailProviderStatus, EmailOrderDetails } from './email.ts';
+import {
+  sendOrderEmails,
+  sendOrderConfirmationEmail,
+  sendAdminOrderNotificationEmail,
+  sendOrderStatusUpdateEmail,
+  getEmailProviderStatus,
+  EmailOrderDetails
+} from './email.ts';
 
 // In-memory orders store fallback to guarantee 100% uptime even if database is offline or container sleeps
 const inMemoryOrders = new Map<string, any>();
@@ -135,6 +145,12 @@ app.get('/api/products/:id', async (req, res) => {
 });
 
 // Helper to format order records into clean response objects
+function getRequestOrigin(req: express.Request): string {
+  const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+  const host = req.get('host') || 'localhost:3000';
+  return (req.headers.origin as string) || (req.headers.referer ? new URL(req.headers.referer).origin : `${protocol}://${host}`);
+}
+
 function formatOrder(order: any) {
   let items: any[] = [];
   if (order.itemsData) {
@@ -200,6 +216,11 @@ function formatOrder(order: any) {
     emailError: order.emailError || undefined,
     emailProvider: order.emailProvider || undefined,
     emailMessageId: order.emailMessageId || undefined,
+    adminEmailSent: Boolean(order.adminEmailSent),
+    adminEmailProvider: order.adminEmailProvider || undefined,
+    adminEmailMessageId: order.adminEmailMessageId || undefined,
+    adminEmailError: order.adminEmailError || undefined,
+    adminEmail: order.adminEmail || undefined,
     createdAt: order.createdAt ? new Date(order.createdAt).toISOString() : new Date().toISOString(),
     updatedAt: order.updatedAt ? new Date(order.updatedAt).toISOString() : new Date().toISOString(),
   };
@@ -337,24 +358,55 @@ app.post('/api/orders', async (req, res) => {
     inMemoryOrders.set(orderNumber, formattedOrder);
     inMemoryOrders.set(formattedOrder.id, formattedOrder);
 
-    // Ensure the backend actually attempts to send real email confirmation
-    const emailResult = await sendOrderConfirmationEmail(formattedOrder);
+    // Trigger dual real emails: Customer confirmation + Store Admin alert
+    const dispatchReport = await sendOrderEmails(formattedOrder, getRequestOrigin(req));
 
     const responseOrder = {
       ...formattedOrder,
-      emailSent: emailResult.success,
-      emailProvider: emailResult.provider,
-      emailMessageId: emailResult.messageId,
-      emailError: emailResult.success ? undefined : emailResult.error
+      emailSent: dispatchReport.customerResult.success,
+      emailProvider: dispatchReport.customerResult.provider,
+      emailMessageId: dispatchReport.customerResult.messageId,
+      emailError: dispatchReport.customerResult.success ? undefined : dispatchReport.customerResult.error,
+      adminEmailSent: dispatchReport.adminResult.success,
+      adminEmailProvider: dispatchReport.adminResult.provider,
+      adminEmailMessageId: dispatchReport.adminResult.messageId,
+      adminEmailError: dispatchReport.adminResult.success ? undefined : dispatchReport.adminResult.error,
+      adminEmail: dispatchReport.adminEmail
     };
 
     inMemoryOrders.set(orderNumber, responseOrder);
     inMemoryOrders.set(responseOrder.id, responseOrder);
 
-    if (emailResult.success) {
-      console.log(`[Email] Order confirmation successfully sent to ${email} (Provider: ${emailResult.provider}, ID: ${emailResult.messageId})`);
+    // Persist email telemetry directly into database
+    try {
+      await prisma.order.update({
+        where: { orderNumber },
+        data: {
+          emailSent: dispatchReport.customerResult.success,
+          emailProvider: dispatchReport.customerResult.provider,
+          emailMessageId: dispatchReport.customerResult.messageId || null,
+          emailError: dispatchReport.customerResult.success ? null : (dispatchReport.customerResult.error || 'Failed'),
+          adminEmailSent: dispatchReport.adminResult.success,
+          adminEmailProvider: dispatchReport.adminResult.provider,
+          adminEmailMessageId: dispatchReport.adminResult.messageId || null,
+          adminEmailError: dispatchReport.adminResult.success ? null : (dispatchReport.adminResult.error || 'Failed'),
+          adminEmail: dispatchReport.adminEmail
+        }
+      });
+    } catch (dbUpdateErr) {
+      console.warn('Prisma telemetry update non-fatal error:', dbUpdateErr);
+    }
+
+    if (dispatchReport.customerResult.success) {
+      console.log(`[Email] Customer receipt sent to ${email} (Provider: ${dispatchReport.customerResult.provider}, ID: ${dispatchReport.customerResult.messageId})`);
     } else {
-      console.warn(`[Email] Order confirmation delivery failed for ${email}: ${emailResult.error}`);
+      console.warn(`[Email] Customer receipt failed for ${email}: ${dispatchReport.customerResult.error}`);
+    }
+
+    if (dispatchReport.adminResult.success) {
+      console.log(`[Email] Store admin alert sent to ${dispatchReport.adminEmail} (Provider: ${dispatchReport.adminResult.provider}, ID: ${dispatchReport.adminResult.messageId})`);
+    } else {
+      console.warn(`[Email] Store admin alert failed: ${dispatchReport.adminResult.error}`);
     }
 
     res.status(201).json(responseOrder);
@@ -373,11 +425,16 @@ app.get('/api/email/status', (req, res) => {
 // Test Email Sending Endpoint (Can test sending real email to user)
 app.post('/api/email/test', async (req, res) => {
   try {
-    const targetEmail = (req.body?.to || req.query?.to || 'amna.naeem2556@gmail.com') as string;
+    const targetEmail = (req.body?.to || req.query?.to || 'amna.butt2556@gmail.com') as string;
     const sampleOrder: EmailOrderDetails = {
       id: `LUM-TEST-${Math.floor(1000 + Math.random() * 9000)}`,
       orderNumber: `LUM-TEST-${Math.floor(1000 + Math.random() * 9000)}`,
-      customerName: 'Amna Naeem',
+      orderDate: new Date().toLocaleDateString('en-PK', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }),
+      customerName: 'Amna Butt',
       email: targetEmail,
       phone: '+92 (300) 8472910',
       shippingAddress: 'Villa 14, Phase 5 DHA, Lahore',
@@ -386,7 +443,7 @@ app.post('/api/email/test', async (req, res) => {
       estimatedDelivery: '2-3 Business Days',
       courierName: 'TCS White-Glove VIP Express',
       trackingNumber: 'AWB-TEST-PK',
-      paymentMethod: 'Easypaisa Mobile Wallet',
+      paymentMethod: 'Easypaisa Direct Mobile Wallet',
       paymentStatus: 'Completed',
       subtotal: 68500,
       discount: 6850,
@@ -408,12 +465,12 @@ app.post('/api/email/test', async (req, res) => {
     };
 
     console.log(`[Email] Testing email dispatch to ${targetEmail}...`);
-    const result = await sendOrderConfirmationEmail(sampleOrder);
+    const dispatchReport = await sendOrderEmails(sampleOrder, getRequestOrigin(req));
 
-    if (!result.success) {
-      return res.status(502).json(result);
-    }
-    res.json(result);
+    res.json({
+      success: dispatchReport.customerResult.success || dispatchReport.adminResult.success,
+      ...dispatchReport
+    });
   } catch (err: any) {
     console.error('[Email] Test email error:', err);
     res.status(500).json({ success: false, error: err.message });
@@ -453,12 +510,8 @@ app.post('/api/orders/:id/resend-email', async (req, res) => {
       return res.status(404).json({ error: 'Order not found.' });
     }
 
-    const result = await sendOrderConfirmationEmail(formatted);
-
-    if (!result.success) {
-      return res.status(502).json(result);
-    }
-    res.json(result);
+    const dispatchReport = await sendOrderEmails(formatted, getRequestOrigin(req));
+    res.json(dispatchReport);
   } catch (err: any) {
     console.error('[Email] Resend order email error:', err);
     res.status(500).json({ success: false, error: err.message });
@@ -477,9 +530,6 @@ const trackOrderHandler = async (req: express.Request, res: express.Response) =>
     // Validate inputs
     if (!trimmedOrderId) {
       return res.status(400).json({ error: 'Please enter your Order ID (e.g. LUM-948201).' });
-    }
-    if (!trimmedIdentifier) {
-      return res.status(400).json({ error: 'Please enter your Email or Mobile Number.' });
     }
 
     const cleanId = trimmedOrderId.toUpperCase();
@@ -514,40 +564,58 @@ const trackOrderHandler = async (req: express.Request, res: express.Response) =>
 
     let formatted: any = order ? formatOrder(order) : null;
 
+    const mem = inMemoryOrders.get(cleanId) ||
+                inMemoryOrders.get(cleanIdWithPrefix) ||
+                inMemoryOrders.get(cleanIdWithoutPrefix) ||
+                Array.from(inMemoryOrders.values()).find(
+                  (o: any) => o.orderNumber === cleanId ||
+                              o.orderNumber === cleanIdWithPrefix ||
+                              o.trackingNumber === cleanId ||
+                              o.id === cleanId
+                );
+
     if (!formatted) {
-      formatted = inMemoryOrders.get(cleanId) ||
-                  inMemoryOrders.get(cleanIdWithPrefix) ||
-                  inMemoryOrders.get(cleanIdWithoutPrefix) ||
-                  Array.from(inMemoryOrders.values()).find(
-                    (o: any) => o.orderNumber === cleanId ||
-                                o.orderNumber === cleanIdWithPrefix ||
-                                o.trackingNumber === cleanId ||
-                                o.id === cleanId
-                  );
+      formatted = mem;
+    } else if (mem) {
+      formatted = {
+        ...formatted,
+        emailSent: formatted.emailSent || mem.emailSent,
+        emailProvider: formatted.emailProvider || mem.emailProvider,
+        emailMessageId: formatted.emailMessageId || mem.emailMessageId,
+        emailError: formatted.emailError || mem.emailError,
+        adminEmailSent: formatted.adminEmailSent || mem.adminEmailSent,
+        adminEmailProvider: formatted.adminEmailProvider || mem.adminEmailProvider,
+        adminEmailMessageId: formatted.adminEmailMessageId || mem.adminEmailMessageId,
+        adminEmailError: formatted.adminEmailError || mem.adminEmailError,
+        adminEmail: formatted.adminEmail || mem.adminEmail,
+      };
     }
 
     if (!formatted) {
-      return res.status(404).json({ error: 'Order not found.' });
+      return res.status(404).json({ error: 'Order not found. Please verify your Order ID.' });
     }
 
-    const cleanIdfLower = trimmedIdentifier.toLowerCase();
-    const orderEmail = (formatted.email || '').toLowerCase().trim();
+    // Optional verification if email or phone is provided
+    if (trimmedIdentifier) {
+      const cleanIdfLower = trimmedIdentifier.toLowerCase();
+      const orderEmail = (formatted.email || '').toLowerCase().trim();
 
-    const normalizePhone = (str: string) => str.replace(/[^0-9]/g, '').replace(/^92/, '0');
-    const inputPhoneDigits = normalizePhone(trimmedIdentifier);
-    const orderPhoneDigits = normalizePhone(formatted.phone || '');
+      const normalizePhone = (str: string) => str.replace(/[^0-9]/g, '').replace(/^92/, '0');
+      const inputPhoneDigits = normalizePhone(trimmedIdentifier);
+      const orderPhoneDigits = normalizePhone(formatted.phone || '');
 
-    const emailMatches = orderEmail === cleanIdfLower;
-    const phoneMatches = Boolean(
-      inputPhoneDigits.length >= 7 &&
-      orderPhoneDigits.length >= 7 &&
-      (orderPhoneDigits === inputPhoneDigits ||
-       orderPhoneDigits.endsWith(inputPhoneDigits) ||
-       inputPhoneDigits.endsWith(orderPhoneDigits))
-    );
+      const emailMatches = orderEmail === cleanIdfLower;
+      const phoneMatches = Boolean(
+        inputPhoneDigits.length >= 7 &&
+        orderPhoneDigits.length >= 7 &&
+        (orderPhoneDigits === inputPhoneDigits ||
+         orderPhoneDigits.endsWith(inputPhoneDigits) ||
+         inputPhoneDigits.endsWith(orderPhoneDigits))
+      );
 
-    if (!emailMatches && !phoneMatches) {
-      return res.status(400).json({ error: 'The provided information does not match this order.' });
+      if (!emailMatches && !phoneMatches) {
+        return res.status(400).json({ error: 'The provided email or phone does not match this order.' });
+      }
     }
 
     // Return live verified order data
@@ -688,10 +756,89 @@ app.patch('/api/admin/orders/:id/status', async (req, res) => {
     inMemoryOrders.set(cleanIdWithPrefix, updatedOrder);
     if (updatedOrder.orderNumber) inMemoryOrders.set(updatedOrder.orderNumber, updatedOrder);
 
-    res.json({ success: true, order: updatedOrder });
+    // Send customer notification email when admin changes order status
+    let statusEmailReport: any = null;
+    try {
+      statusEmailReport = await sendOrderStatusUpdateEmail(updatedOrder, getRequestOrigin(req));
+      if (statusEmailReport.success) {
+        console.log(`[Email] Status update email (${normalizedStatus}) delivered to ${updatedOrder.email} (Provider: ${statusEmailReport.provider}, ID: ${statusEmailReport.messageId})`);
+      } else {
+        console.warn(`[Email] Status update email could not be delivered to ${updatedOrder.email}: ${statusEmailReport.error}`);
+      }
+    } catch (statusEmailErr: any) {
+      console.warn(`[Email] Status update email error: ${statusEmailErr.message}`);
+    }
+
+    res.json({
+      success: true,
+      order: updatedOrder,
+      statusEmailSent: statusEmailReport?.success ?? false,
+      statusEmailProvider: statusEmailReport?.provider,
+      statusEmailMessageId: statusEmailReport?.messageId,
+      statusEmailError: statusEmailReport?.error
+    });
   } catch (error) {
     console.error('Error updating order status:', error);
     res.status(500).json({ error: 'Failed to update order status.' });
+  }
+});
+
+// Update Email Configuration API (Secure administrative endpoint)
+app.post('/api/admin/email/config', async (req, res) => {
+  try {
+    const { resendApiKey, brevoApiKey, sendgridApiKey, emailFrom, adminEmail } = req.body;
+    const fs = await import('fs');
+    const path = await import('path');
+    const envPath = path.resolve(process.cwd(), '.env');
+
+    let envContent = '';
+    try {
+      envContent = fs.readFileSync(envPath, 'utf8');
+    } catch {}
+
+    const envMap: Record<string, string> = {};
+    for (const line of envContent.split('\n')) {
+      const trimmed = line.trim();
+      if (trimmed && !trimmed.startsWith('#') && trimmed.includes('=')) {
+        const idx = trimmed.indexOf('=');
+        const k = trimmed.slice(0, idx).trim();
+        const v = trimmed.slice(idx + 1).trim();
+        envMap[k] = v;
+      }
+    }
+
+    if (typeof resendApiKey === 'string') {
+      envMap['RESEND_API_KEY'] = resendApiKey.trim();
+      process.env.RESEND_API_KEY = resendApiKey.trim();
+    }
+    if (typeof brevoApiKey === 'string') {
+      envMap['BREVO_API_KEY'] = brevoApiKey.trim();
+      process.env.BREVO_API_KEY = brevoApiKey.trim();
+    }
+    if (typeof sendgridApiKey === 'string') {
+      envMap['SENDGRID_API_KEY'] = sendgridApiKey.trim();
+      process.env.SENDGRID_API_KEY = sendgridApiKey.trim();
+    }
+    if (typeof emailFrom === 'string' && emailFrom.trim()) {
+      envMap['EMAIL_FROM'] = emailFrom.trim();
+      process.env.EMAIL_FROM = emailFrom.trim();
+    }
+    if (typeof adminEmail === 'string' && adminEmail.trim()) {
+      envMap['ADMIN_EMAIL'] = adminEmail.trim();
+      process.env.ADMIN_EMAIL = adminEmail.trim();
+      envMap['STORE_ADMIN_EMAIL'] = adminEmail.trim();
+      process.env.STORE_ADMIN_EMAIL = adminEmail.trim();
+    }
+
+    const newLines = Object.entries(envMap).map(([k, v]) => `${k}=${v}`);
+    fs.writeFileSync(envPath, newLines.join('\n') + '\n', 'utf8');
+
+    const status = getEmailProviderStatus();
+    console.log(`[EmailConfig] Updated email configuration: Active Provider = ${status.provider}`);
+    res.json({ success: true, message: 'Email configuration updated.', status });
+  } catch (err: any) {
+    console.error('Failed to update email config:', err);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 

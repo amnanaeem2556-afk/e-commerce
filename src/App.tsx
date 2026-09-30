@@ -6,8 +6,6 @@ import { Footer } from './components/Footer';
 import { QuickViewModal } from './components/QuickViewModal';
 import { SearchModal } from './components/SearchModal';
 import { SizeGuideModal } from './components/SizeGuideModal';
-import { FloatingFeedback } from './components/FloatingFeedback';
-import { FloatingSupport } from './components/FloatingSupport';
 import { ToastContainer } from './components/ToastContainer';
 
 // Pages
@@ -161,12 +159,10 @@ const AppContent: React.FC = () => {
       {/* Luxury Footer with Trust Badges & Newsletter */}
       <Footer />
 
-      {/* Global Interactive Modals & Floating Buttons */}
+      {/* Global Interactive Modals */}
       <QuickViewModal />
       <SearchModal />
       <SizeGuideModal />
-      <FloatingFeedback />
-      <FloatingSupport />
       <ToastContainer />
     </div>
   );

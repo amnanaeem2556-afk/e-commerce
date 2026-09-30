@@ -29,9 +29,51 @@ export const AdminOrdersPage: React.FC = () => {
     senderEmail: string;
     details: string;
   } | null>(null);
-  const [testEmailInput, setTestEmailInput] = useState('amna.naeem2556@gmail.com');
+  const [testEmailInput, setTestEmailInput] = useState('amna.butt2556@gmail.com');
   const [isSendingTest, setIsSendingTest] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+
+  // Email Provider Credentials Config State
+  const [showConfigDrawer, setShowConfigDrawer] = useState(false);
+  const [resendKeyInput, setResendKeyInput] = useState('');
+  const [brevoKeyInput, setBrevoKeyInput] = useState('');
+  const [sendgridKeyInput, setSendgridKeyInput] = useState('');
+  const [emailFromInput, setEmailFromInput] = useState('Lumora Haute Couture <onboarding@resend.dev>');
+  const [adminEmailInput, setAdminEmailInput] = useState('amna.butt2556@gmail.com');
+  const [isSavingConfig, setIsSavingConfig] = useState(false);
+
+  const handleSaveEmailConfig = async () => {
+    setIsSavingConfig(true);
+    try {
+      const res = await fetch('/api/admin/email/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          resendApiKey: resendKeyInput.trim() || undefined,
+          brevoApiKey: brevoKeyInput.trim() || undefined,
+          sendgridApiKey: sendgridKeyInput.trim() || undefined,
+          emailFrom: emailFromInput.trim() || undefined,
+          adminEmail: adminEmailInput.trim() || undefined
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setEmailAudit(data.status);
+        addToast(
+          'Email Service Activated',
+          `Provider ${data.status.provider.toUpperCase()} is now connected and active.`,
+          'success'
+        );
+        setShowConfigDrawer(false);
+      } else {
+        addToast('Configuration Failed', data.error || 'Could not save credentials.', 'luxury');
+      }
+    } catch (err: any) {
+      addToast('Error', err.message || 'Network error saving config.', 'luxury');
+    } finally {
+      setIsSavingConfig(false);
+    }
+  };
 
   const fetchEmailAudit = async () => {
     try {
@@ -145,7 +187,20 @@ export const AdminOrdersPage: React.FC = () => {
       const res = await updateOrderStatus(orderId, newStatus);
       if (res.success && res.order) {
         setOrders(prev => prev.map(o => (o.id === orderId || o.orderNumber === orderId ? res.order! : o)));
-        addToast('Status Synchronized', `Order #${orderId} updated to "${STATUS_CONFIG[newStatus]?.label || newStatus}". Live tracking reflects this change instantly.`, 'success');
+        const statusName = STATUS_CONFIG[newStatus]?.label || newStatus;
+        if (res.statusEmailSent) {
+          addToast(
+            'Status Synchronized & Email Sent',
+            `Order #${orderId} set to "${statusName}". Notification email dispatched to ${res.order.email} (${res.statusEmailProvider?.toUpperCase() || 'EMAIL'}).`,
+            'success'
+          );
+        } else {
+          addToast(
+            'Status Synchronized',
+            `Order #${orderId} updated to "${statusName}". Live tracking updated instantly.`,
+            'info'
+          );
+        }
       } else {
         addToast('Update Failed', res.error || 'Could not update status.', 'luxury');
       }
@@ -168,16 +223,16 @@ export const AdminOrdersPage: React.FC = () => {
   });
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12 space-y-6 sm:space-y-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E7D6C1] pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E7D6C1] pb-4 sm:pb-6">
         <div>
           <span className="text-[10px] uppercase tracking-[0.25em] text-[#C48A5A] font-semibold flex items-center gap-1.5">
             <ShieldCheck className="w-3.5 h-3.5" />
             Atelier Administrative Console
           </span>
-          <h1 className="font-heading text-3xl sm:text-4xl text-[#2B1D17] tracking-[0.03em] leading-none mt-1">
-            Order Management
+          <h1 className="font-heading text-3xl sm:text-4xl lg:text-5xl text-[#2B1D17] tracking-[0.03em] leading-none mt-1">
+            Order <span className="text-[#C48A5A]">Management</span>
           </h1>
           <p className="text-xs sm:text-sm text-[#6B4A3A] font-light mt-1">
             Live database records. Status updates reflect instantly on customer tracking screens.
@@ -223,8 +278,121 @@ export const AdminOrdersPage: React.FC = () => {
             >
               {emailAudit?.provider ? emailAudit.provider.toUpperCase() : 'CHECKING...'}
             </span>
+            <button
+              onClick={() => setShowConfigDrawer(!showConfigDrawer)}
+              className="ml-2 px-2.5 py-1 bg-white border border-[#E7D6C1] hover:border-[#2B1D17] text-[#2B1D17] text-[11px] font-semibold tracking-wider uppercase cursor-pointer"
+            >
+              {showConfigDrawer ? 'Close Settings' : 'Configure Keys'}
+            </button>
           </div>
         </div>
+
+        {/* Expandable API Credentials Configuration */}
+        {showConfigDrawer && (
+          <div className="p-4 bg-white border border-[#E7D6C1] space-y-4 animate-fadeIn">
+            <div className="border-b border-[#E7D6C1] pb-2">
+              <h4 className="font-heading text-lg text-[#2B1D17]">Email Service Provider Credentials</h4>
+              <p className="text-xs text-[#6B4A3A]">
+                Configure your real Resend, Brevo, or SendGrid API key. The server securely connects to the active provider and starts delivering live order receipts to customers and store admin.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+              <div>
+                <label className="block text-[11px] font-semibold text-[#2B1D17] mb-1">
+                  Resend API Key <span className="text-[#C48A5A]">(Primary Service)</span>
+                </label>
+                <input
+                  type="password"
+                  value={resendKeyInput}
+                  onChange={(e) => setResendKeyInput(e.target.value)}
+                  placeholder="re_xxxxxxxxxxxxxxxxxxxx"
+                  className="w-full bg-[#FAF6F0] border border-[#E7D6C1] p-2 text-xs font-mono text-[#2B1D17] focus:outline-none focus:border-[#2B1D17]"
+                />
+                <span className="text-[10px] text-[#8C6A58] block mt-0.5">
+                  Get yours from resend.com/api-keys
+                </span>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-[#2B1D17] mb-1">
+                  Brevo API Key <span className="text-[#8C6A58]">(Secondary Failover)</span>
+                </label>
+                <input
+                  type="password"
+                  value={brevoKeyInput}
+                  onChange={(e) => setBrevoKeyInput(e.target.value)}
+                  placeholder="xkeysib-xxxxxxxxxxxxxxxxxxxx"
+                  className="w-full bg-[#FAF6F0] border border-[#E7D6C1] p-2 text-xs font-mono text-[#2B1D17] focus:outline-none focus:border-[#2B1D17]"
+                />
+                <span className="text-[10px] text-[#8C6A58] block mt-0.5">
+                  Get yours from app.brevo.com/settings/keys/api
+                </span>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-[#2B1D17] mb-1">
+                  SendGrid API Key <span className="text-[#8C6A58]">(Optional Fallback)</span>
+                </label>
+                <input
+                  type="password"
+                  value={sendgridKeyInput}
+                  onChange={(e) => setSendgridKeyInput(e.target.value)}
+                  placeholder="SG.xxxxxxxxxxxxxxxxxxxx"
+                  className="w-full bg-[#FAF6F0] border border-[#E7D6C1] p-2 text-xs font-mono text-[#2B1D17] focus:outline-none focus:border-[#2B1D17]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-[#2B1D17] mb-1">
+                  Store Admin Email <span className="text-[#8C6A58]">(Receives new order alerts)</span>
+                </label>
+                <input
+                  type="email"
+                  value={adminEmailInput}
+                  onChange={(e) => setAdminEmailInput(e.target.value)}
+                  placeholder="amna.butt2556@gmail.com"
+                  className="w-full bg-[#FAF6F0] border border-[#E7D6C1] p-2 text-xs text-[#2B1D17] focus:outline-none focus:border-[#2B1D17]"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-[11px] font-semibold text-[#2B1D17] mb-1">
+                  Sender From Address <span className="text-[#8C6A58]">(Must match verified domain in Resend/Brevo)</span>
+                </label>
+                <input
+                  type="text"
+                  value={emailFromInput}
+                  onChange={(e) => setEmailFromInput(e.target.value)}
+                  placeholder="Lumora Haute Couture <onboarding@resend.dev>"
+                  className="w-full bg-[#FAF6F0] border border-[#E7D6C1] p-2 text-xs text-[#2B1D17] focus:outline-none focus:border-[#2B1D17]"
+                />
+                <span className="text-[10px] text-[#8C6A58] block mt-0.5">
+                  Use <code>onboarding@resend.dev</code> for testing without DNS verification, or your verified domain e.g. <code>orders@yourdomain.com</code>.
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-[#E7D6C1]">
+              <button
+                type="button"
+                onClick={() => setShowConfigDrawer(false)}
+                className="px-4 py-2 border border-[#E7D6C1] hover:bg-neutral-50 text-xs font-semibold uppercase tracking-wider text-[#6B4A3A] cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveEmailConfig}
+                disabled={isSavingConfig}
+                className="px-5 py-2 bg-[#2B1D17] hover:bg-[#6B4A3A] disabled:opacity-50 text-[#FAF6F0] text-xs font-semibold uppercase tracking-wider cursor-pointer flex items-center gap-2"
+              >
+                {isSavingConfig ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5 text-[#C48A5A]" />}
+                <span>Save & Activate Provider</span>
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
           <div className="bg-white p-3 border border-[#E7D6C1]">
@@ -240,7 +408,7 @@ export const AdminOrdersPage: React.FC = () => {
                 type="email"
                 value={testEmailInput}
                 onChange={(e) => setTestEmailInput(e.target.value)}
-                placeholder="e.g. amna.naeem2556@gmail.com"
+                placeholder="e.g. amna.butt2556@gmail.com"
                 className="flex-1 bg-[#FAF6F0] border border-[#E7D6C1] px-2.5 py-1 text-xs text-[#2B1D17] focus:outline-none focus:border-[#C48A5A]"
               />
               <button

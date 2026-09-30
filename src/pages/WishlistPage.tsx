@@ -1,16 +1,10 @@
 import React from 'react';
-import { Heart, ShoppingBag, Trash2, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Heart, ShoppingBag, ArrowRight } from 'lucide-react';
 import { useShop } from '../context/ShopContext';
-import { formatPKR } from '../data/constants';
-import { Product } from '../types';
+import { ProductCard } from '../components/ProductCard';
 
 export const WishlistPage: React.FC = () => {
-  const { wishlist, removeFromWishlist, addToCart, setCurrentPage, viewProduct, addToast } = useShop();
-
-  const handleMoveToBag = (product: Product) => {
-    addToCart(product, product.colors?.[0]?.name || 'Standard', product.sizes?.[0] || 'M', 1);
-    removeFromWishlist(product.id);
-  };
+  const { wishlist, addToCart, setCurrentPage, addToast } = useShop();
 
   const handleAddAllToBag = () => {
     wishlist.forEach((item) => {
@@ -48,22 +42,22 @@ export const WishlistPage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10 space-y-6 sm:space-y-8">
       {/* Header */}
-      <div className="border-b border-[#E7D6C1] pb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+      <div className="border-b border-[#E7D6C1] pb-4 sm:pb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4">
         <div>
           <span className="text-[10px] uppercase tracking-[0.25em] text-[#C48A5A] font-semibold">
             Saved For Later
           </span>
           <h1 className="font-heading text-3xl sm:text-4xl lg:text-5xl text-[#2B1D17] tracking-[0.03em] leading-none mt-1">
-            My Wishlist ({wishlist.length})
+            My <span className="text-[#C48A5A]">Wishlist</span> ({wishlist.length})
           </h1>
         </div>
 
         <div className="flex items-center gap-4">
           <button
             onClick={handleAddAllToBag}
-            className="bg-[#2B1D17] text-[#FAF6F0] hover:bg-[#6B4A3A] text-xs uppercase tracking-wider font-semibold py-3 px-5 transition-colors cursor-pointer flex items-center gap-2"
+            className="bg-[#2B1D17] text-[#FAF6F0] hover:bg-[#6B4A3A] text-xs uppercase tracking-wider font-semibold py-3 px-5 transition-colors cursor-pointer flex items-center gap-2 shadow-sm"
           >
             <ShoppingBag className="w-3.5 h-3.5" />
             <span>Add All to Bag</span>
@@ -72,67 +66,11 @@ export const WishlistPage: React.FC = () => {
       </div>
 
       {/* Grid of Wishlist Items */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-5 xl:gap-6">
         {wishlist.map((item) => {
           const product = item.product;
           if (!product) return null;
-
-          return (
-            <div
-              key={item.id}
-              className="bg-[#FAF6F0] border border-[#E7D6C1] flex flex-col justify-between group overflow-hidden shadow-xs hover:border-[#6B4A3A] transition-colors"
-            >
-              <div
-                onClick={() => viewProduct(product)}
-                className="relative aspect-[3/4] overflow-hidden bg-[#E7D6C1]/20 cursor-pointer"
-              >
-                <img
-                  src={product.images?.[0] || ''}
-                  alt={product.name}
-                  referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                />
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeFromWishlist(product.id);
-                  }}
-                  className="absolute top-2.5 right-2.5 p-2 bg-[#FAF6F0]/90 text-[#2B1D17] hover:text-red-600 rounded-full shadow-xs transition-colors"
-                  aria-label="Remove from wishlist"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-              <div className="p-4 space-y-2 flex-1 flex flex-col justify-between">
-                <div>
-                  <span className="text-[9.5px] uppercase tracking-wider text-[#C48A5A] font-semibold">
-                    {product.collection}
-                  </span>
-                  <h3
-                    onClick={() => viewProduct(product)}
-                    className="font-sans text-sm sm:text-base font-semibold text-[#2B1D17] hover:text-[#6B4A3A] cursor-pointer truncate"
-                  >
-                    {product.name}
-                  </h3>
-                  <p className="text-xs text-[#6B4A3A] truncate">{product.subtitle}</p>
-                  <p className="font-sans text-sm font-semibold text-[#2B1D17] mt-1">
-                    {formatPKR(product.price)}
-                  </p>
-                </div>
-
-                <div className="pt-3 border-t border-[#E7D6C1]/60">
-                  <button
-                    onClick={() => handleMoveToBag(product)}
-                    className="w-full bg-[#2B1D17] hover:bg-[#6B4A3A] text-[#FAF6F0] text-[11px] uppercase tracking-widest font-semibold py-2.5 px-3 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                  >
-                    <ShoppingBag className="w-3.5 h-3.5" />
-                    <span>Move to Bag</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          );
+          return <ProductCard key={item.id} product={product} />;
         })}
       </div>
     </div>

@@ -1,39 +1,72 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight, ArrowRight, ArrowUpRight, Star, Compass, Award, Feather, Heart } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowRight, ArrowUpRight, Star, Compass, Award, Feather, Heart, Check } from 'lucide-react';
 import { useShop } from '../context/ShopContext';
 import { PRODUCTS, CATEGORIES_META } from '../data/products';
 import { INITIAL_REVIEWS } from '../data/reviews';
+import { formatPKR } from '../data/constants';
 import { ProductCard } from '../components/ProductCard';
-import { getOptimizedImageUrl } from '../utils/imageOptimizer';
+import { getOptimizedImageUrl, getResponsiveSrcSet } from '../utils/imageOptimizer';
 
 import heroEditorialPortrait from '../assets/images/hero_editorial_portrait_1789122773345.jpg';
+import heroEditorialPortraitWebp from '../assets/images/hero_editorial_portrait_1789122773345.webp';
+import heroEditorialPortraitMobileWebp from '../assets/images/hero_editorial_portrait_1789122773345_mobile.webp';
+
 import heroFullbodyTailoring from '../assets/images/hero_fullbody_tailoring_1789122795297.jpg';
+import heroFullbodyTailoringWebp from '../assets/images/hero_fullbody_tailoring_1789122795297.webp';
+import heroFullbodyTailoringMobileWebp from '../assets/images/hero_fullbody_tailoring_1789122795297_mobile.webp';
+
 import heroLifestyleScene from '../assets/images/hero_lifestyle_scene_1789122837997.jpg';
+import heroLifestyleSceneWebp from '../assets/images/hero_lifestyle_scene_1789122837997.webp';
+import heroLifestyleSceneMobileWebp from '../assets/images/hero_lifestyle_scene_1789122837997_mobile.webp';
+
 import heroHorologyCloseup from '../assets/images/hero_horology_closeup_1789122819384.jpg';
+import heroHorologyCloseupWebp from '../assets/images/hero_horology_closeup_1789122819384.webp';
+import heroHorologyCloseupMobileWebp from '../assets/images/hero_horology_closeup_1789122819384_mobile.webp';
 
-// Pre-cache all high-resolution hero banner images into memory immediately for instant smooth display
-const HERO_BANNER_SOURCES = [
-  heroEditorialPortrait,
-  heroFullbodyTailoring,
-  heroLifestyleScene,
-  heroHorologyCloseup,
-];
+// Collection Cards Exact Editorial Images
+import womenEditorialImg from '../assets/images/women_hero_editorial_1789200049432.jpg';
+import menEditorialImg from '../assets/images/men_hero_editorial_1789200067222.jpg';
+import watchEditorialImg from '../assets/images/hero_horology_closeup_1789122819384.jpg';
+import shoesEditorialImg from '../assets/images/shoes_hero_editorial_1789200083177.jpg';
+import bagsEditorialImg from '../assets/images/bags_hero_editorial_1789200097933.jpg';
+import comoMulberrySilkImg from '../assets/images/como_mulberry_silk_1789829323225.jpg';
+import seasonalEditRackImg from '../assets/images/seasonal_edit_rack_1789829548509.jpg';
 
+// Preload strictly the above-the-fold hero image (Slide 0) for instant immediate display
 if (typeof window !== 'undefined') {
-  HERO_BANNER_SOURCES.forEach((src) => {
-    const img = new Image();
-    img.src = src;
-  });
+  const isMobile = window.innerWidth < 768;
+  const aboveTheFoldHero = new Image();
+  aboveTheFoldHero.src = isMobile ? heroEditorialPortraitMobileWebp : heroEditorialPortraitWebp;
 }
 
 export const HomePage: React.FC = () => {
-  const { setCurrentPage, setSelectedCategoryFilter, toggleWishlist, isInWishlist } = useShop();
+  const { setCurrentPage, setSelectedCategoryFilter, toggleWishlist, isInWishlist, viewProduct } = useShop();
 
   // Hero Slider State & Progress
   const [currentSlide, setCurrentSlide] = useState(0);
   const [slideProgress, setSlideProgress] = useState(0);
   const [imagesLoaded, setImagesLoaded] = useState<Record<string, boolean>>({});
-  const [activeMaterial, setActiveMaterial] = useState<'cashmere' | 'silk' | 'leather' | 'horology'>('cashmere');
+  const [activeMaterial, setActiveMaterial] = useState<'cashmere' | 'silk' | 'leather' | 'horology'>('silk');
+
+  // Preload strictly the above-the-fold hero image (Slide 0) via DOM link element with high fetchpriority
+  useEffect(() => {
+    const isMobile = window.innerWidth < 768;
+    const heroSrc = isMobile ? heroEditorialPortraitMobileWebp : heroEditorialPortraitWebp;
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'image';
+    link.type = 'image/webp';
+    link.href = heroSrc;
+    link.imageSrcset = `${heroEditorialPortraitMobileWebp} 720w, ${heroEditorialPortraitWebp} 1376w`;
+    link.imageSizes = '100vw';
+    link.setAttribute('fetchpriority', 'high');
+    document.head.appendChild(link);
+    return () => {
+      if (document.head.contains(link)) {
+        document.head.removeChild(link);
+      }
+    };
+  }, []);
 
   const heroSlides = [
     {
@@ -47,8 +80,11 @@ export const HomePage: React.FC = () => {
       linkPage: 'shop' as const,
       category: null,
       image: heroEditorialPortrait,
+      imageWebp: heroEditorialPortraitWebp,
+      imageMobileWebp: heroEditorialPortraitMobileWebp,
       badge: 'Florence Atelier',
       tabLabel: 'Autumn Edit',
+      focalPosition: 'object-center',
     },
     {
       id: 'slide-1',
@@ -61,8 +97,11 @@ export const HomePage: React.FC = () => {
       linkPage: 'men' as const,
       category: 'men',
       image: heroFullbodyTailoring,
+      imageWebp: heroFullbodyTailoringWebp,
+      imageMobileWebp: heroFullbodyTailoringMobileWebp,
       badge: 'Italian Wool Melton',
       tabLabel: 'Men’s Sartorial',
+      focalPosition: 'object-center',
     },
     {
       id: 'slide-2',
@@ -75,8 +114,11 @@ export const HomePage: React.FC = () => {
       linkPage: 'women' as const,
       category: 'women',
       image: heroLifestyleScene,
+      imageWebp: heroLifestyleSceneWebp,
+      imageMobileWebp: heroLifestyleSceneMobileWebp,
       badge: 'Como Silk & Cashmere',
       tabLabel: 'Women’s Atelier',
+      focalPosition: 'object-center',
     },
     {
       id: 'slide-3',
@@ -89,8 +131,11 @@ export const HomePage: React.FC = () => {
       linkPage: 'watches' as const,
       category: 'watches',
       image: heroHorologyCloseup,
+      imageWebp: heroHorologyCloseupWebp,
+      imageMobileWebp: heroHorologyCloseupMobileWebp,
       badge: 'Swiss Mechanical Automatic',
       tabLabel: 'Fine Horology',
+      focalPosition: 'object-center',
     }
   ];
 
@@ -114,6 +159,15 @@ export const HomePage: React.FC = () => {
       clearInterval(slideTimer);
     };
   }, [currentSlide, heroSlides.length]);
+
+  // Pre-fetch next slide right before transition so slides appear immediately when shown
+  useEffect(() => {
+    const nextIdx = (currentSlide + 1) % heroSlides.length;
+    const nextSlide = heroSlides[nextIdx];
+    const isMobile = window.innerWidth < 768;
+    const prefetchImg = new Image();
+    prefetchImg.src = isMobile ? nextSlide.imageMobileWebp : nextSlide.imageWebp;
+  }, [currentSlide, heroSlides]);
 
   const handleHeroCTA = (slide: typeof heroSlides[0]) => {
     if (slide.category) {
@@ -150,7 +204,7 @@ export const HomePage: React.FC = () => {
       weight: '22-Momme Heavyweight Charmeuse',
       origin: 'Lake Como, Northern Italy',
       description: 'Woven on heritage water-jet looms in century-old Como mills. Features an opalescent liquid drape and a buttery hand that breathes effortlessly against bare skin.',
-      image: 'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?auto=format&fit=crop&w=1200&q=85',
+      image: comoMulberrySilkImg,
       tag: 'Como Heritage',
       linkCategory: 'women',
     },
@@ -179,9 +233,9 @@ export const HomePage: React.FC = () => {
   const currentMaterial = materials[activeMaterial];
 
   return (
-    <div className="space-y-24 sm:space-y-32 pb-20">
+    <div className="space-y-14 sm:space-y-20 lg:space-y-24 pb-16 sm:pb-20">
       {/* 1. EDITORIAL LUXURY HERO SLIDER */}
-      <section className="relative h-[84vh] sm:h-[86vh] lg:h-[88vh] min-h-[560px] sm:min-h-[600px] md:min-h-[640px] lg:min-h-[700px] max-h-[920px] w-full overflow-hidden bg-[#2B1D17]">
+      <section className="relative h-[70vh] xs:h-[74vh] sm:h-[85vh] lg:h-[88vh] min-h-[430px] sm:min-h-[560px] md:min-h-[640px] lg:min-h-[700px] max-h-[920px] w-full overflow-hidden bg-[#2B1D17]">
         {heroSlides.map((slide, idx) => {
           const isActive = currentSlide === idx;
           const prefix = slide.title.replace(slide.italicWord, '').trimEnd();
@@ -194,40 +248,44 @@ export const HomePage: React.FC = () => {
             >
               {/* Background Image with warm luxury tonal grade & cinematic Ken Burns zoom */}
               <div className="absolute inset-0 overflow-hidden bg-[#2B1D17]">
-                <img
-                  src={slide.image}
-                  alt={slide.title}
-                  loading="eager"
-                  decoding="async"
-                  fetchPriority={idx === 0 ? 'high' : 'auto'}
-                  onLoad={() => setImagesLoaded((prev) => ({ ...prev, [slide.id]: true }))}
-                  referrerPolicy="no-referrer"
-                  className={`w-full h-full object-cover object-center transition-opacity duration-700 ease-in-out ${
-                    isActive ? 'animate-hero-zoom opacity-100' : 'scale-100 opacity-90'
-                  } ${imagesLoaded[slide.id] ? 'opacity-100' : 'opacity-95'}`}
-                />
-                {/* Espresso & Mocha Duotone luxury gradients */}
-                <div className="absolute inset-0 bg-gradient-to-r from-[#2B1D17]/90 via-[#2B1D17]/60 to-[#2B1D17]/20" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#2B1D17] via-transparent to-[#2B1D17]/40" />
+                <picture className="w-full h-full">
+                  <source
+                    type="image/webp"
+                    media="(max-width: 767px)"
+                    srcSet={slide.imageMobileWebp}
+                  />
+                  <source
+                    type="image/webp"
+                    media="(min-width: 768px)"
+                    srcSet={slide.imageWebp}
+                  />
+                  <img
+                    src={slide.image}
+                    alt={slide.title}
+                    loading={idx === 0 ? 'eager' : 'lazy'}
+                    decoding={idx === 0 ? 'sync' : 'async'}
+                    fetchPriority={idx === 0 ? 'high' : 'low'}
+                    onLoad={() => setImagesLoaded((prev) => ({ ...prev, [slide.id]: true }))}
+                    referrerPolicy="no-referrer"
+                    className={`w-full h-full object-cover ${slide.focalPosition} transition-opacity duration-700 ease-in-out ${
+                      isActive ? 'animate-hero-zoom opacity-100' : 'scale-100 opacity-90'
+                    } ${imagesLoaded[slide.id] ? 'opacity-100' : 'opacity-95'}`}
+                  />
+                </picture>
+                {/* Luxury Editorial Scrim - Preserves rich photography while providing crisp text contrast */}
+                {/* Desktop: gentle left-to-right espresso gradient */}
+                <div className="hidden sm:block absolute inset-0 bg-gradient-to-r from-[#140C08]/92 via-[#140C08]/45 to-transparent/10 pointer-events-none" />
+                {/* Mobile: bottom-to-top subtle gradient leaving top 55% model face/silhouette crystal clear */}
+                <div className="sm:hidden absolute inset-0 bg-gradient-to-t from-[#140C08] via-[#140C08]/55 via-45% to-transparent pointer-events-none" />
+                {/* Cinematic Vignette */}
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,transparent_60%,rgba(26,17,13,0.4)_100%)] pointer-events-none" />
               </div>
 
               {/* Editorial Content Frame */}
-              <div className="relative z-20 h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col justify-center pt-4 sm:pt-8 md:pt-12 pb-24 sm:pb-28 md:pb-24 lg:pb-20">
-                <div className="max-w-2xl space-y-3.5 sm:space-y-5 md:space-y-6">
-                  {/* Floating Salon Tag */}
-                  <div className="inline-flex items-center gap-2 sm:gap-2.5 bg-[#FAF6F0]/10 backdrop-blur-md border border-[#E7D6C1]/30 px-3 sm:px-3.5 py-1.5 shadow-xs max-w-full">
-                    <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#C48A5A] animate-pulse shrink-0" />
-                    <span className="font-sans text-[10px] sm:text-[11px] tracking-[0.18em] sm:tracking-[0.2em] text-[#E7D6C1] uppercase font-semibold whitespace-nowrap">
-                      {slide.subtitle}
-                    </span>
-                    <span className="text-[#E7D6C1]/40 text-xs hidden xs:inline select-none">•</span>
-                    <span className="font-sans text-[10px] sm:text-[11px] text-[#C48A5A] font-medium tracking-[0.1em] hidden xs:inline whitespace-nowrap">
-                      {slide.badge}
-                    </span>
-                  </div>
-
+              <div className="relative z-20 h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col justify-end sm:justify-center pt-4 sm:pt-8 md:pt-12 pb-24 sm:pb-24 md:pb-24 lg:pb-20">
+                <div className="max-w-2xl space-y-3.5 sm:space-y-4 md:space-y-5">
                   {/* Main Modern Luxury Headline */}
-                  <h1 className="font-heading text-4xl xs:text-5xl sm:text-6xl md:text-6xl lg:text-[68px] xl:text-[76px] text-[#FAF6F0] tracking-[0.03em] leading-[0.96] max-w-2xl break-words">
+                  <h1 className="font-heading text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-[68px] xl:text-[76px] text-[#FAF6F0] tracking-[0.03em] leading-[1.05] sm:leading-[0.96] max-w-2xl break-words">
                     {prefix}{' '}
                     <span className="text-[#E5A97A]">
                       {slide.italicWord}
@@ -240,10 +298,10 @@ export const HomePage: React.FC = () => {
                   </p>
 
                   {/* Dual Action Buttons */}
-                  <div className="flex flex-row flex-wrap sm:flex-nowrap items-center gap-3 sm:gap-4 pt-1.5 sm:pt-2 w-full sm:w-auto">
+                  <div className="flex flex-row flex-wrap sm:flex-nowrap items-center gap-3 sm:gap-4 pt-1 sm:pt-2 w-full sm:w-auto">
                     <button
                       onClick={() => handleHeroCTA(slide)}
-                      className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2.5 sm:gap-3 bg-[#C48A5A] hover:bg-[#FAF6F0] text-[#2B1D17] font-sans text-[11px] sm:text-xs font-bold tracking-[0.16em] sm:tracking-[0.18em] uppercase py-3.5 sm:py-4 px-5 sm:px-8 transition-all duration-300 shadow-xl group cursor-pointer text-center whitespace-nowrap"
+                      className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 sm:gap-2.5 bg-[#C48A5A] hover:bg-[#FAF6F0] text-[#2B1D17] font-sans text-[11px] sm:text-xs font-bold tracking-[0.16em] sm:tracking-[0.18em] uppercase py-3.5 sm:py-4 px-5 sm:px-8 transition-all duration-300 shadow-xl group cursor-pointer text-center whitespace-nowrap"
                     >
                       <span>{slide.cta}</span>
                       <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#2B1D17] group-hover:translate-x-1.5 transition-transform shrink-0" />
@@ -353,9 +411,9 @@ export const HomePage: React.FC = () => {
       </section>
 
       {/* 2. THE CURATED COLLECTIONS */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 lg:py-16">
-        {/* Section Header matching New Arrivals style */}
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-10 gap-4 border-b border-[#E7D6C1] pb-5">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Section Header: Reverted back to original Explore Our Collections heading */}
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 sm:mb-8 lg:mb-10 gap-3 sm:gap-4 border-b border-[#E7D6C1] pb-4 sm:pb-5">
           <div>
             <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl text-[#2B1D17] tracking-[0.03em] leading-none">
               Explore Our <span className="text-[#C48A5A]">Collections</span>
@@ -374,7 +432,7 @@ export const HomePage: React.FC = () => {
           </button>
         </div>
 
-        {/* Clean Modern Premium Collection Cards (Equal Height Grid) */}
+        {/* Clean Modern Premium Collection Cards (Exact Reference Design) */}
         {(() => {
           const featuredProducts = {
             women: PRODUCTS.find((p) => p.category === 'women'),
@@ -387,48 +445,48 @@ export const HomePage: React.FC = () => {
           const collectionCards = [
             {
               id: 'women' as const,
-              styles: '6 Styles',
-              title: "Women's Collection",
-              description: 'Cashmere coats and pure silk slips.',
-              image: getOptimizedImageUrl('https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=85', 600, 85),
+              styles: '6 STYLES',
+              title: "Women’s Atelier",
+              description: 'Cashmere coats & silk slips',
+              image: womenEditorialImg,
               crop: 'object-[center_20%]',
             },
             {
               id: 'men' as const,
-              styles: '6 Styles',
-              title: "Men's Tailoring",
-              description: 'Tailored blazers and wool overcoats.',
-              image: getOptimizedImageUrl('https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=900&q=85', 600, 85),
-              crop: 'object-[center_20%]',
+              styles: '6 STYLES',
+              title: "Men’s Sartorial",
+              description: 'Wool overcoats & blazers',
+              image: menEditorialImg,
+              crop: 'object-[center_18%]',
             },
             {
               id: 'watches' as const,
-              styles: '5 Styles',
-              title: 'Fine Watches',
-              description: 'Swiss movements and sapphire crystals.',
-              image: getOptimizedImageUrl('https://images.unsplash.com/photo-1524805444758-089113d48a6d?auto=format&fit=crop&w=900&q=85', 600, 85),
+              styles: '5 STYLES',
+              title: 'Fine Horology',
+              description: 'Swiss automatic calibres',
+              image: watchEditorialImg,
               crop: 'object-center',
             },
             {
               id: 'shoes' as const,
-              styles: '5 Styles',
-              title: 'Leather Shoes',
-              description: 'Blake-stitched calfskin loafers and boots.',
-              image: getOptimizedImageUrl('https://images.unsplash.com/photo-1533867617858-e7b97e060509?auto=format&fit=crop&w=900&q=85', 600, 85),
+              styles: '5 STYLES',
+              title: 'Artisanal Shoes',
+              description: 'Blake-stitched calfskin',
+              image: shoesEditorialImg,
               crop: 'object-center',
             },
             {
               id: 'accessories' as const,
-              styles: '5 Styles',
-              title: 'Bags & Accessories',
-              description: 'Full-grain Tuscan leather and silk scarves.',
-              image: getOptimizedImageUrl('https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&w=900&q=85', 600, 85),
+              styles: '5 STYLES',
+              title: 'Leather & Silk',
+              description: 'Tuscan bags & silk scarves',
+              image: bagsEditorialImg,
               crop: 'object-center',
             },
           ];
 
           return (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5 sm:gap-6 lg:gap-4 xl:gap-5 items-stretch">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5 sm:gap-4 xl:gap-4.5 items-stretch">
               {collectionCards.map((col) => {
                 const representativeProduct = featuredProducts[col.id];
                 const isWishlisted = representativeProduct ? isInWishlist(representativeProduct.id) : false;
@@ -447,20 +505,20 @@ export const HomePage: React.FC = () => {
                         handleCategoryClick(col.id);
                       }
                     }}
-                    className="group bg-white rounded-2xl border border-[#E7D6C1]/80 hover:border-[#C48A5A]/70 shadow-[0_2px_12px_rgba(43,29,23,0.04)] hover:shadow-[0_12px_28px_rgba(43,29,23,0.08)] transition-all duration-400 overflow-hidden flex flex-col h-full cursor-pointer"
+                    className="group bg-[#FAF6F0] rounded-xl sm:rounded-2xl border border-[#EBDDCF] shadow-[0_2px_12px_rgba(43,29,23,0.04)] hover:shadow-[0_8px_24px_rgba(43,29,23,0.08)] hover:border-[#C48A5A]/60 transition-all duration-300 overflow-hidden flex flex-col h-full cursor-pointer"
                   >
-                    {/* Top Section: Large Edge-to-Edge Image with No Heavy Overlays */}
-                    <div className="relative w-full aspect-[4/3] sm:aspect-[4/3] overflow-hidden bg-[#FAF6F0]">
+                    {/* Top Image Section: Compact, Balanced Aspect Ratio */}
+                    <div className="relative w-full aspect-[1.25/1] overflow-hidden bg-[#EFE8DF]">
                       <img
                         src={col.image}
                         alt={col.title}
                         loading="lazy"
                         decoding="async"
                         referrerPolicy="no-referrer"
-                        className={`w-full h-full object-cover ${col.crop} group-hover:scale-105 transition-transform duration-700 ease-out`}
+                        className={`w-full h-full object-cover ${col.crop} group-hover:scale-104 transition-transform duration-700 ease-out`}
                       />
 
-                      {/* Wishlist Heart Icon Button (Refined Floating Circular Badge) */}
+                      {/* Wishlist Heart Icon Button */}
                       <button
                         type="button"
                         id={`wishlist-collection-${col.id}`}
@@ -472,40 +530,40 @@ export const HomePage: React.FC = () => {
                             toggleWishlist(representativeProduct);
                           }
                         }}
-                        className={`absolute top-3 right-3 z-10 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm hover:scale-110 active:scale-95 cursor-pointer ${
+                        className={`absolute top-2 sm:top-2.5 right-2 sm:right-2.5 z-10 w-7 h-7 sm:w-7.5 sm:h-7.5 rounded-full flex items-center justify-center transition-all duration-300 shadow-xs hover:scale-110 active:scale-95 cursor-pointer ${
                           isWishlisted
                             ? 'bg-white text-[#C48A5A] border border-[#C48A5A] shadow-[0_2px_8px_rgba(196,138,90,0.25)]'
-                            : 'bg-white/90 hover:bg-white text-[#2B1D17] hover:text-[#C48A5A] backdrop-blur-xs border border-[#E7D6C1]/90'
+                            : 'bg-white/95 hover:bg-white text-[#2B1D17] hover:text-[#C48A5A] border border-[#E7D6C1]/70'
                         }`}
                       >
                         <Heart
-                          className={`w-4 h-4 transition-transform duration-300 ease-out ${
-                            isWishlisted ? 'fill-[#C48A5A] text-[#C48A5A]' : 'text-current stroke-[1.8]'
+                          className={`w-3 sm:w-3.5 h-3 sm:h-3.5 transition-transform duration-300 ease-out ${
+                            isWishlisted ? 'fill-[#C48A5A] text-[#C48A5A]' : 'text-[#2B1D17] stroke-[1.6]'
                           }`}
                         />
                       </button>
                     </div>
 
-                    {/* Bottom Section: Balanced Padding, Light Weight Typography & Minimal Outline Button */}
-                    <div className="p-5 sm:p-5 lg:p-4 xl:p-5 flex flex-col flex-1 justify-between bg-white">
+                    {/* Bottom Content Area: Refined & Lightweight */}
+                    <div className="p-3 sm:p-3.5 flex flex-col flex-1 justify-between bg-[#FAF6F0]">
                       <div>
                         {/* Upper Style Count Kicker */}
-                        <div className="text-[10px] sm:text-[10.5px] font-medium uppercase tracking-[0.2em] text-[#C48A5A] mb-1.5">
+                        <div className="text-[9px] sm:text-[9.5px] font-medium uppercase tracking-[0.18em] text-[#9E7A5A] mb-1">
                           {col.styles}
                         </div>
 
-                        {/* Title with Lighter Weight */}
-                        <h3 className="font-heading text-lg sm:text-xl lg:text-lg xl:text-[21px] font-normal text-[#2B1D17] tracking-[0.01em] mb-2 leading-tight group-hover:text-[#C48A5A] transition-colors duration-300">
+                        {/* Classical Serif Title */}
+                        <h3 className="font-serif text-[15px] sm:text-[16px] lg:text-[16.5px] font-normal text-[#2B1D17] tracking-[0.015em] mb-1.5 leading-snug group-hover:text-[#9E7A5A] transition-colors duration-300 break-words">
                           {col.title}
                         </h3>
 
-                        {/* Short Concise Description with no truncation */}
-                        <p className="font-sans text-xs sm:text-[12px] lg:text-[11px] xl:text-xs text-[#6B4A3A] font-light leading-relaxed mb-5 sm:mb-6">
+                        {/* Fully Written Elegant Description */}
+                        <p className="font-sans text-[12px] sm:text-[12.5px] text-[#523B2F] font-normal leading-relaxed mb-3 break-words">
                           {col.description}
                         </p>
                       </div>
 
-                      {/* Minimal Outline Button Inspired by Reference */}
+                      {/* Pill BROWSE Outline Button */}
                       <button
                         type="button"
                         id={`browse-collection-${col.id}`}
@@ -513,7 +571,7 @@ export const HomePage: React.FC = () => {
                           e.stopPropagation();
                           handleCategoryClick(col.id);
                         }}
-                        className="w-full py-2.5 px-4 rounded-full border border-[#2B1D17]/30 group-hover:border-[#2B1D17] hover:bg-[#2B1D17] hover:text-[#FAF6F0] text-[#2B1D17] text-xs uppercase tracking-[0.2em] font-medium transition-all duration-300 text-center cursor-pointer bg-white mt-auto shadow-2xs"
+                        className="w-full py-2 px-3 rounded-full border border-[#CBB49E] group-hover:border-[#2B1D17] hover:bg-[#2B1D17] hover:text-[#FAF6F0] text-[#2B1D17] text-[10px] uppercase tracking-[0.18em] font-medium transition-all duration-300 text-center cursor-pointer bg-[#FAF6F0] mt-auto shadow-2xs"
                       >
                         Browse
                       </button>
@@ -525,15 +583,18 @@ export const HomePage: React.FC = () => {
           );
         })()}
       </section>
-      {/* 3. NEW ARRIVALS */}
+
+      {/* 3. NEW ARRIVALS (Exact Reference Match: Serif Title, Badges, Wishlist & Fully Responsive Cards) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-10 gap-4 border-b border-[#E7D6C1] pb-5">
+        {/* Section Header: Matching the standard heading style across the website */}
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 sm:mb-8 lg:mb-10 gap-3 sm:gap-4 border-b border-[#E7D6C1] pb-4 sm:pb-5">
           <div>
             <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl text-[#2B1D17] tracking-[0.03em] leading-none">
               New <span className="text-[#C48A5A]">Arrivals</span>
             </h2>
           </div>
           <button
+            id="new-arrivals-view-all-btn"
             onClick={() => setCurrentPage('new_arrivals')}
             className="text-xs uppercase tracking-[0.2em] text-[#2B1D17] hover:text-[#C48A5A] flex items-center gap-2 font-semibold group cursor-pointer"
           >
@@ -542,81 +603,303 @@ export const HomePage: React.FC = () => {
           </button>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-          {newArrivals.map((product, idx) => (
-            <ProductCard key={product.id} product={product} priority={idx < 4} />
-          ))}
-        </div>
+        {/* 4 Premier New Arrival Cards matching exact image reference */}
+        {(() => {
+          const premierArrivals = [
+            {
+              id: 'lmr-w-01',
+              product: PRODUCTS.find((p) => p.id === 'lmr-w-01'),
+              kicker: 'QUIET LUXURY',
+              rating: 4.9,
+              title: 'Sienna Cashmere Coat',
+              subtitle: 'Grade-A Mongolian cashmere',
+              discount: '-14%',
+              price: 68500,
+              oldPrice: 79900,
+              image: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=1200&q=85',
+              crop: 'object-[center_20%]',
+              colors: [
+                { name: 'Espresso', hex: '#2B1D17' },
+                { name: 'Mocha', hex: '#6B4A3A' },
+                { name: 'Cream', hex: '#FAF6F0' },
+              ],
+            },
+            {
+              id: 'lmr-w-02',
+              product: PRODUCTS.find((p) => p.id === 'lmr-w-02'),
+              kicker: 'ATELIER RESERVE',
+              rating: 4.8,
+              title: 'Aurelia Silk Slip',
+              subtitle: '22-momme pure Como silk',
+              discount: '-12%',
+              price: 38900,
+              oldPrice: 44500,
+              image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1200&q=85',
+              crop: 'object-[center_20%]',
+              colors: [
+                { name: 'Cream', hex: '#FAF6F0' },
+                { name: 'Mocha', hex: '#6B4A3A' },
+                { name: 'Espresso', hex: '#2B1D17' },
+              ],
+            },
+            {
+              id: 'lmr-m-01',
+              product: PRODUCTS.find((p) => p.id === 'lmr-m-01'),
+              kicker: 'QUIET LUXURY',
+              rating: 4.9,
+              title: 'Milano Wool Trench',
+              subtitle: 'Virgin wool & cashmere melton',
+              discount: '-15%',
+              price: 74900,
+              oldPrice: 88000,
+              image: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=1200&q=85',
+              crop: 'object-[center_18%]',
+              colors: [
+                { name: 'Navy', hex: '#1D263B' },
+                { name: 'Slate', hex: '#7D8491' },
+                { name: 'Caramel', hex: '#C48A5A' },
+              ],
+            },
+            {
+              id: 'lmr-wt-01',
+              product: PRODUCTS.find((p) => p.id === 'lmr-wt-01'),
+              kicker: 'ATELIER RESERVE',
+              rating: 5.0,
+              title: 'Nocturne Automatic 39mm',
+              subtitle: '28,800 vph Swiss calibre',
+              discount: '-11%',
+              price: 114500,
+              oldPrice: 128000,
+              image: watchEditorialImg,
+              crop: 'object-center',
+              colors: [
+                { name: 'Espresso', hex: '#2B1D17' },
+                { name: 'Mocha', hex: '#6B4A3A' },
+                { name: 'Caramel', hex: '#C48A5A' },
+              ],
+            },
+          ];
+
+          return (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4 xl:gap-5 items-stretch">
+              {premierArrivals.map((item) => {
+                const prod = item.product;
+                const isWishlisted = prod ? isInWishlist(prod.id) : false;
+
+                return (
+                  <div
+                    key={item.id}
+                    id={`new-arrival-card-${item.id}`}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`View ${item.title}`}
+                    onClick={() => {
+                      if (prod) viewProduct(prod);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        if (prod) viewProduct(prod);
+                      }
+                    }}
+                    className="group bg-[#FAF6F0] rounded-xl sm:rounded-2xl border border-[#EBDDCF] shadow-[0_2px_12px_rgba(43,29,23,0.04)] hover:shadow-[0_8px_24px_rgba(43,29,23,0.08)] hover:border-[#C48A5A]/60 transition-all duration-300 overflow-hidden flex flex-col h-full cursor-pointer"
+                  >
+                    {/* Top Image Section: Compact & Balanced */}
+                    <div className="relative w-full aspect-[1.25/1] overflow-hidden bg-[#EFE8DF]">
+                      <img
+                        src={getOptimizedImageUrl(item.image, 600, 80)}
+                        srcSet={getResponsiveSrcSet(item.image, [360, 480, 600, 800])}
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                        alt={item.title}
+                        loading="lazy"
+                        decoding="async"
+                        referrerPolicy="no-referrer"
+                        className={`w-full h-full object-cover ${item.crop} group-hover:scale-104 transition-transform duration-700 ease-out`}
+                      />
+
+                      {/* Stacked Badges in Top Left */}
+                      <div className="absolute top-2 sm:top-2.5 left-2 sm:left-2.5 z-10 flex flex-col items-start gap-0.5 pointer-events-none">
+                        <span className="bg-[#9E6D42] text-white text-[8.5px] sm:text-[9px] font-semibold tracking-[0.14em] px-2 py-0.5 rounded-[2px] uppercase shadow-xs">
+                          NEW SEASON
+                        </span>
+                        <span className="bg-white text-[#2B1D17] text-[9px] sm:text-[9.5px] font-bold tracking-[0.04em] px-1.5 py-0.5 rounded-[2px] shadow-xs">
+                          {item.discount}
+                        </span>
+                      </div>
+
+                      {/* Wishlist Heart Icon Button */}
+                      <button
+                        type="button"
+                        id={`wishlist-new-arrival-${item.id}`}
+                        aria-label={isWishlisted ? `Remove ${item.title} from wishlist` : `Add ${item.title} to wishlist`}
+                        title={isWishlisted ? "Saved in your wishlist" : "Save to wishlist"}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (prod) {
+                            toggleWishlist(prod);
+                          }
+                        }}
+                        className={`absolute top-2 sm:top-2.5 right-2 sm:right-2.5 z-10 w-7 h-7 sm:w-7.5 sm:h-7.5 rounded-full flex items-center justify-center transition-all duration-300 shadow-xs hover:scale-110 active:scale-95 cursor-pointer ${
+                          isWishlisted
+                            ? 'bg-white text-[#C48A5A] border border-[#C48A5A] shadow-[0_2px_8px_rgba(196,138,90,0.25)]'
+                            : 'bg-white/95 hover:bg-white text-[#2B1D17] hover:text-[#C48A5A] border border-[#E7D6C1]/70'
+                        }`}
+                      >
+                        <Heart
+                          className={`w-3 sm:w-3.5 h-3 sm:h-3.5 transition-transform duration-300 ease-out ${
+                            isWishlisted ? 'fill-[#C48A5A] text-[#C48A5A]' : 'text-[#2B1D17] stroke-[1.6]'
+                          }`}
+                        />
+                      </button>
+                    </div>
+
+                    {/* Bottom Content Area: Refined & Compact */}
+                    <div className="p-3 sm:p-3.5 flex flex-col flex-1 justify-between bg-[#FAF6F0] min-w-0">
+                      <div className="min-w-0">
+                        {/* Kicker & Rating Row */}
+                        <div className="flex items-center justify-between gap-1.5 mb-1.5 min-w-0">
+                          <span className="font-sans text-[9px] sm:text-[9.5px] uppercase tracking-[0.16em] sm:tracking-[0.18em] text-[#A6805B] font-medium">
+                            {item.kicker}
+                          </span>
+                          <div className="flex items-center gap-1 shrink-0 text-[10.5px] sm:text-[11px] text-[#A6805B] font-medium">
+                            <Star className="w-3 h-3 fill-[#C48A5A] text-[#C48A5A]" />
+                            <span className="text-[#2B1D17] font-semibold">{item.rating.toFixed(1)}</span>
+                          </div>
+                        </div>
+
+                        {/* Classical Serif Title */}
+                        <h3 className="font-serif text-[15px] sm:text-[16px] lg:text-[16.5px] font-normal text-[#221610] tracking-[0.015em] mb-1.5 leading-snug group-hover:text-[#9E7A5A] transition-colors duration-300 break-words">
+                          {item.title}
+                        </h3>
+
+                        {/* Fully Written Subtitle & Description */}
+                        <p className="font-sans text-[12px] sm:text-[12.5px] text-[#523B2F] font-normal leading-relaxed tracking-[0.01em] mb-2.5 break-words">
+                          {item.subtitle}
+                        </p>
+
+                        {/* Color Swatches */}
+                        <div className="flex items-center gap-1.5 mb-2">
+                          {item.colors.map((c, idx) => (
+                            <span
+                              key={idx}
+                              className="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded-full border border-black/10 shadow-2xs inline-block"
+                              style={{ backgroundColor: c.hex }}
+                              title={c.name}
+                            />
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Price & Interactive Arrow Navigation */}
+                      <div className="flex items-center justify-between pt-2 sm:pt-2.5 border-t border-[#EBDDCF]/70 mt-auto min-w-0">
+                        <div className="flex items-baseline gap-1.5 flex-wrap min-w-0">
+                          <span className="font-sans text-[13px] sm:text-[14.5px] font-semibold text-[#221610] tracking-normal whitespace-nowrap">
+                            {formatPKR(item.price)}
+                          </span>
+                          {item.oldPrice && (
+                            <span className="text-[10px] sm:text-[11.5px] text-[#9E8B7E] line-through whitespace-nowrap">
+                              {formatPKR(item.oldPrice)}
+                            </span>
+                          )}
+                        </div>
+
+                        <span className="w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-[#8C6D53] group-hover:text-[#221610] group-hover:translate-x-0.5 transition-all duration-300 shrink-0 ml-1">
+                          <ArrowRight className="w-3 h-3" />
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
       </section>
 
       {/* 5. PROMOTIONAL EDITORIAL CAMPAIGN SPREAD: "THE SEASON'S EDIT" */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="relative bg-[#2B1D17] text-[#FAF6F0] overflow-hidden border border-[#6B4A3A] shadow-2xl">
-          <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[500px]">
+        <div className="bg-[#FAF6F0] rounded-[22px] sm:rounded-[26px] border border-[#E7DACD] p-5 sm:p-8 lg:p-12 shadow-[0_4px_24px_rgba(43,29,23,0.04)]">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-12 items-center">
             {/* Left Narrative Spread */}
-            <div className="lg:col-span-7 p-6 sm:p-10 lg:p-16 flex flex-col justify-center space-y-6 z-10">
-              <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl tracking-[0.03em] text-[#FAF6F0] leading-none">
-                Seasonal <span className="text-[#C48A5A]">Edit</span>
-              </h2>
+            <div className="lg:col-span-7 flex flex-col justify-between">
+              <div>
+                {/* Heading matching uploaded image: Bebas Neue single-line SEASONAL EDIT */}
+                <h2 className="font-heading text-4xl sm:text-5xl lg:text-6xl text-[#1F140E] tracking-[0.03em] leading-none mb-5 sm:mb-6">
+                  SEASONAL <span className="text-[#C48A5A]">EDIT</span>
+                </h2>
 
-              <p className="text-base sm:text-lg text-[#E7D6C1] border-l-2 border-[#C48A5A] pl-4 font-normal leading-relaxed">
-                &ldquo;True luxury does not clamor for attention, it commands it through proportion, weight, and touch.&rdquo;
-              </p>
+                {/* Quote with left caramel border */}
+                <div className="border-l-2 border-[#A07049] pl-4 sm:pl-5 mb-4 sm:mb-6">
+                  <p className="font-serif text-[16px] sm:text-[18px] lg:text-[19px] text-[#1F140E] font-normal leading-relaxed">
+                    &ldquo;True luxury does not clamor for attention, it commands it through proportion, weight, and touch.&rdquo;
+                  </p>
+                </div>
 
-              <p className="text-xs sm:text-sm text-[#E7D6C1]/90 leading-relaxed font-normal max-w-lg">
-                Discover refined essentials engineered for modern wardrobes. From double-faced virgin wool coats to bias-cut mulberry silk shirting, each garment represents an enduring dialogue between architectural structure and effortless ease.
-              </p>
+                {/* Description Narrative */}
+                <p className="font-sans text-[13px] sm:text-[14px] text-[#523B2F] font-light leading-relaxed max-w-lg mb-5 sm:mb-8">
+                  Discover refined essentials engineered for modern wardrobes. From double-faced virgin wool coats to bias-cut mulberry silk shirting, each garment represents an enduring dialogue between architectural structure and effortless ease.
+                </p>
 
-              {/* Material Spec Pills */}
-              <div className="flex flex-wrap gap-2 pt-1">
-                <span className="text-[10px] uppercase tracking-wider bg-[#FAF6F0]/10 border border-[#E7D6C1]/30 text-[#FAF6F0] px-3 py-1 font-semibold">
-                  Grade-A Mongolian Fleece
-                </span>
-                <span className="text-[10px] uppercase tracking-wider bg-[#FAF6F0]/10 border border-[#E7D6C1]/30 text-[#FAF6F0] px-3 py-1 font-semibold">
-                  22-Momme Como Silk
-                </span>
-                <span className="text-[10px] uppercase tracking-wider bg-[#FAF6F0]/10 border border-[#E7D6C1]/30 text-[#FAF6F0] px-3 py-1 font-semibold">
-                  Tuscan Calfskin
-                </span>
+                {/* Material Spec Badges */}
+                <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 mb-6 sm:mb-8">
+                  <span className="text-[10px] sm:text-[11px] uppercase tracking-[0.16em] bg-transparent border border-[#D5C2AF] text-[#523B2F] px-3 sm:px-4 py-1.5 sm:py-2 font-medium">
+                    GRADE-A MONGOLIAN FLEECE
+                  </span>
+                  <span className="text-[10px] sm:text-[11px] uppercase tracking-[0.16em] bg-[#A07049] border border-[#A07049] text-white px-3 sm:px-4 py-1.5 sm:py-2 font-medium shadow-2xs">
+                    22-MOMME COMO SILK
+                  </span>
+                  <span className="text-[10px] sm:text-[11px] uppercase tracking-[0.16em] bg-transparent border border-[#D5C2AF] text-[#523B2F] px-3 sm:px-4 py-1.5 sm:py-2 font-medium">
+                    TUSCAN CALFSKIN
+                  </span>
+                </div>
+
+                {/* Buttons Row */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
+                  <button
+                    onClick={() => {
+                      setSelectedCategoryFilter(null);
+                      setCurrentPage('shop');
+                    }}
+                    className="inline-flex items-center justify-center gap-2 bg-[#A07049] hover:bg-[#8C5E3A] text-white text-[11px] sm:text-xs font-medium tracking-[0.18em] uppercase py-3.5 sm:py-4 px-6 sm:px-8 transition-colors cursor-pointer shadow-sm text-center whitespace-nowrap group"
+                  >
+                    <span>EXPLORE THE EDIT</span>
+                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage('sale')}
+                    className="inline-flex items-center justify-center border border-[#D5C2AF] text-[#523B2F] hover:border-[#1F140E] hover:text-[#1F140E] text-[11px] sm:text-xs font-medium tracking-[0.18em] uppercase py-3.5 sm:py-4 px-6 sm:px-8 transition-colors cursor-pointer text-center whitespace-nowrap bg-transparent"
+                  >
+                    PRIVILEGE ARCHIVE
+                  </button>
+                </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 pt-2 w-full sm:w-auto">
-                <button
-                  onClick={() => {
-                    setSelectedCategoryFilter(null);
-                    setCurrentPage('shop');
-                  }}
-                  className="w-full sm:w-auto inline-flex items-center justify-center bg-[#C48A5A] hover:bg-[#FAF6F0] text-[#2B1D17] text-xs font-bold tracking-[0.18em] uppercase py-3.5 sm:py-4 px-7 sm:px-8 transition-colors cursor-pointer shadow-lg text-center whitespace-nowrap"
-                >
-                  Explore The Edit
-                </button>
-                <button
-                  onClick={() => setCurrentPage('sale')}
-                  className="w-full sm:w-auto inline-flex items-center justify-center border border-[#E7D6C1]/60 text-[#FAF6F0] hover:bg-[#FAF6F0] hover:text-[#2B1D17] text-xs font-semibold tracking-[0.18em] uppercase py-3.5 sm:py-4 px-6 sm:px-7 transition-colors cursor-pointer text-center whitespace-nowrap"
-                >
-                  Privilege Archive
-                </button>
+              {/* Bottom Kicker & Horizontal Rule */}
+              <div className="flex items-center gap-3 sm:gap-4 pt-2">
+                <span className="font-sans text-[10px] sm:text-[11px] uppercase tracking-[0.18em] sm:tracking-[0.22em] text-[#9E6D42] font-semibold break-words sm:whitespace-nowrap">
+                  CURATED FOR A MORE REFINED WARDROBE
+                </span>
+                <div className="flex-1 h-[1px] bg-[#E5D8CA] min-w-[20px]" />
               </div>
             </div>
 
-            {/* Right Photography Spread with Floating Badge and smooth luxury zoom */}
-            <div className="lg:col-span-5 relative min-h-[300px] sm:min-h-[360px] lg:min-h-full overflow-hidden group">
+            {/* Right Photography Column with Floating Badge - Fully responsive across all devices without cutting the clothes rack */}
+            <div className="lg:col-span-5 relative w-full aspect-[4/3] sm:aspect-[4/3] md:aspect-[16/11] lg:aspect-auto lg:h-full lg:min-h-[460px] rounded-[18px] sm:rounded-[22px] overflow-hidden border border-[#E7DACD] bg-[#EAE2D7] shadow-xs group">
               <img
-                src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1200&q=85"
-                alt="The Season's Edit"
+                src={seasonalEditRackImg}
+                alt="Curated refined garments on wooden hangers"
                 referrerPolicy="no-referrer"
                 loading="lazy"
                 decoding="async"
-                className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-1000 ease-out"
+                className="w-full h-full object-cover object-center group-hover:scale-103 transition-transform duration-700 ease-out"
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-[#2B1D17] via-transparent to-transparent lg:block hidden" />
-              
-              {/* Floating Atelier Seal */}
-              <div className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 bg-[#180E09]/92 backdrop-blur-md border border-[#E5A97A]/80 p-3 sm:p-4 text-center max-w-[180px] shadow-2xl">
-                <span className="text-[9.5px] uppercase tracking-[0.25em] text-[#F5C79E] font-bold block mb-1">
-                  Private Salon
+
+              {/* Floating Atelier Seal - Proportionally scaled so it leaves the clothes visible on mobile */}
+              <div className="absolute bottom-2.5 right-2.5 sm:bottom-5 sm:right-5 bg-[#1F140E]/90 backdrop-blur-md border border-[#4A382C] px-3 py-2 sm:p-4 rounded-[6px] max-w-[150px] sm:max-w-[200px] shadow-lg pointer-events-none">
+                <span className="text-[8.5px] sm:text-[9.5px] uppercase tracking-[0.2em] text-[#D5A070] font-semibold block mb-0.5 sm:mb-1">
+                  PRIVATE SALON
                 </span>
-                <p className="text-[11px] text-white font-sans font-medium leading-tight">
+                <p className="text-[10px] sm:text-[11.5px] text-[#E7DACD] font-light leading-snug">
                   Hand-finished in micro-batches under 150 pieces
                 </p>
               </div>
@@ -627,102 +910,110 @@ export const HomePage: React.FC = () => {
 
       {/* 6. INTERACTIVE CRAFTSMANSHIP & MATERIAL ARCHIVE */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white border border-[#E2D4C3] p-8 sm:p-12 space-y-8 shadow-[0_4px_24px_rgba(43,29,23,0.06)]">
-          <div className="text-center max-w-xl mx-auto space-y-2">
-            <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl text-[#1F140E] tracking-[0.03em] leading-none">
-              Craft & <span className="text-[#A66838]">Materials</span>
-            </h2>
-            <p className="text-xs sm:text-sm text-[#523B2F] font-light">
-              We forge our garments from unblended natural fibers harvested with mindful respect for land, artisan, and patron.
-            </p>
-          </div>
+        {/* Heading remains intact and unchanged as requested */}
+        <div className="text-center max-w-xl mx-auto space-y-2 mb-8 sm:mb-10">
+          <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl text-[#1F140E] tracking-[0.03em] leading-none">
+            Craft & <span className="text-[#A66838]">Materials</span>
+          </h2>
+          <p className="text-xs sm:text-sm text-[#523B2F] font-light">
+            We forge our garments from unblended natural fibers harvested with mindful respect for land, artisan, and patron.
+          </p>
+        </div>
 
-          {/* Interactive Material Selector Tabs */}
-          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 border-b border-[#EFE5D8] pb-4">
-            {(
-              [
-                { key: 'cashmere', label: 'Mongolian Cashmere' },
-                { key: 'silk', label: 'Como Mulberry Silk' },
-                { key: 'leather', label: 'Tuscan Vachetta' },
-                { key: 'horology', label: 'Swiss Mechanical' },
-              ] as const
-            ).map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveMaterial(tab.key)}
-                className={`text-xs uppercase tracking-[0.18em] py-2 px-4 transition-all duration-300 font-medium cursor-pointer ${
-                  activeMaterial === tab.key
-                    ? 'bg-[#1F140E] text-[#FAF6F0] shadow-sm'
-                    : 'bg-[#FAF6F0] text-[#523B2F] hover:text-[#1F140E] border border-[#E2D4C3]'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+        {/* Interactive Material Selector Pills matching reference */}
+        <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-4 mb-8 sm:mb-10">
+          {(
+            [
+              { key: 'cashmere', label: 'MONGOLIAN CASHMERE' },
+              { key: 'silk', label: 'COMO MULBERRY SILK' },
+              { key: 'leather', label: 'TUSCAN VACHETTA' },
+              { key: 'horology', label: 'SWISS MECHANICAL' },
+            ] as const
+          ).map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveMaterial(tab.key)}
+              className={`text-[11px] sm:text-[12px] uppercase tracking-[0.16em] sm:tracking-[0.18em] py-2 sm:py-2.5 px-5 sm:px-6 rounded-full transition-all duration-300 font-medium cursor-pointer ${
+                activeMaterial === tab.key
+                  ? 'bg-[#A07049] text-white border border-[#A07049] shadow-xs'
+                  : 'bg-transparent text-[#523B2F] hover:text-[#1F140E] border border-[#D5C2AF]'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
-          {/* Active Material Showcase Spread */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center pt-2">
-            <div className="lg:col-span-7 space-y-4">
-              <div className="inline-flex items-center gap-2">
-                <Award className="w-4 h-4 text-[#A66838]" />
-                <span className="text-[10px] uppercase tracking-[0.2em] text-[#523B2F] font-semibold">
-                  Origin: {currentMaterial.origin}
+        {/* Full-width Divider Line */}
+        <div className="w-full h-[1px] bg-[#E5D8CA] mb-8 sm:mb-10" />
+
+        {/* Active Material Showcase Card with Rounded Corners & Soft Tone */}
+        <div className="bg-[#FAF6F0] rounded-[22px] sm:rounded-[26px] border border-[#E7DACD] p-6 sm:p-8 lg:p-10 shadow-[0_4px_24px_rgba(43,29,23,0.04)]">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+            {/* Left Content Column */}
+            <div className="lg:col-span-7 flex flex-col justify-between">
+              <div>
+                <span className="font-sans text-[11px] sm:text-[11.5px] uppercase tracking-[0.2em] sm:tracking-[0.22em] text-[#9E6D42] font-semibold mb-2 block">
+                  ORIGIN: {currentMaterial.origin.toUpperCase()}
                 </span>
+
+                <h3 className="font-serif text-3xl sm:text-4xl lg:text-[44px] text-[#1F140E] font-normal leading-[1.1] mb-4 tracking-normal">
+                  {currentMaterial.title}
+                </h3>
+
+                <p className="font-sans text-[14px] sm:text-[15px] text-[#3D2B22] font-normal leading-relaxed mb-6 sm:mb-8 max-w-xl">
+                  {currentMaterial.description}
+                </p>
+
+                {/* Subtle Divider */}
+                <div className="w-full h-[1px] bg-[#E7DACD] mb-6 sm:mb-8" />
+
+                {/* Technical Specifications Matrix */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-8">
+                  <div>
+                    <span className="block font-sans text-[10.5px] sm:text-[11px] uppercase tracking-[0.18em] text-[#9E6D42] font-semibold mb-1.5">
+                      FINEST SPECIFICATION
+                    </span>
+                    <span className="font-serif text-[16px] sm:text-[18px] text-[#1F140E] font-normal block">
+                      {currentMaterial.micron}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block font-sans text-[10.5px] sm:text-[11px] uppercase tracking-[0.18em] text-[#9E6D42] font-semibold mb-1.5">
+                      WEIGHT & STRUCTURE
+                    </span>
+                    <span className="font-serif text-[16px] sm:text-[18px] text-[#1F140E] font-normal block">
+                      {currentMaterial.weight}
+                    </span>
+                  </div>
+                </div>
               </div>
 
-              <h3 className="font-heading text-2xl sm:text-3xl text-[#1F140E] tracking-[0.03em] leading-none">
-                {currentMaterial.title}
-              </h3>
-
-              <p className="text-xs sm:text-sm text-[#523B2F] leading-relaxed font-light">
-                {currentMaterial.description}
-              </p>
-
-              {/* Technical Specifications Matrix */}
-              <div className="grid grid-cols-2 gap-4 pt-2">
-                <div className="p-4 bg-[#FAF6F0] border border-[#E2D4C3]">
-                  <span className="text-[10px] uppercase tracking-wider text-[#523B2F] font-semibold block">
-                    Finest Specification
-                  </span>
-                  <span className="font-sans text-sm font-bold text-[#1F140E]">
-                    {currentMaterial.micron}
-                  </span>
-                </div>
-                <div className="p-4 bg-[#FAF6F0] border border-[#E2D4C3]">
-                  <span className="text-[10px] uppercase tracking-wider text-[#523B2F] font-semibold block">
-                    Weight & Structure
-                  </span>
-                  <span className="font-sans text-sm font-bold text-[#1F140E]">
-                    {currentMaterial.weight}
-                  </span>
-                </div>
-              </div>
-
+              {/* Explore Link */}
               <div className="pt-2">
                 <button
                   onClick={() => {
                     setSelectedCategoryFilter(currentMaterial.linkCategory);
                     setCurrentPage('shop');
                   }}
-                  className="text-xs uppercase tracking-[0.2em] text-[#1F140E] hover:text-[#A66838] font-semibold inline-flex items-center gap-2 underline decoration-[#A66838] cursor-pointer"
+                  className="font-sans text-[11px] sm:text-[12px] uppercase tracking-[0.2em] text-[#8C6445] hover:text-[#1F140E] font-semibold underline decoration-[#C48A5A] underline-offset-4 inline-flex items-center gap-2 cursor-pointer transition-colors group"
                 >
-                  <span>Explore Garments In This Fiber</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <span>EXPLORE GARMENTS IN THIS FIBER</span>
+                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1.5 transition-transform" />
                 </button>
               </div>
             </div>
 
-            <div className="lg:col-span-5 relative aspect-[4/3] sm:aspect-[16/10] lg:aspect-[4/3] overflow-hidden border border-[#E2D4C3] shadow-md group">
+            {/* Right Photography Column */}
+            <div className="lg:col-span-5 relative aspect-[4/3] sm:aspect-[16/11] lg:aspect-[1.15/1] rounded-[18px] sm:rounded-[22px] overflow-hidden border border-[#E7DACD] shadow-sm group">
               <img
                 src={currentMaterial.image}
                 alt={currentMaterial.title}
+                loading="lazy"
+                decoding="async"
                 referrerPolicy="no-referrer"
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+                className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-700 ease-out"
               />
-              <div className="absolute top-3 right-3 bg-[#1F140E]/85 backdrop-blur-xs text-[#FAF6F0] text-[9.5px] uppercase tracking-[0.2em] px-2.5 py-1 border border-[#A66838]/60">
-                {currentMaterial.tag}
-              </div>
             </div>
           </div>
         </div>
@@ -730,7 +1021,7 @@ export const HomePage: React.FC = () => {
 
       {/* 6. BEST SELLERS */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-10 gap-4 border-b border-[#E7D6C1] pb-5">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 sm:mb-8 lg:mb-10 gap-3 sm:gap-4 border-b border-[#E7D6C1] pb-4 sm:pb-5">
           <div>
             <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl text-[#2B1D17] tracking-[0.03em] leading-none">
               Best <span className="text-[#C48A5A]">Sellers</span>
@@ -745,76 +1036,324 @@ export const HomePage: React.FC = () => {
           </button>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-          {bestSellers.map((product, idx) => (
-            <ProductCard key={product.id} product={product} priority={idx < 4} />
-          ))}
-        </div>
+        {/* 4 Premier Best Seller Cards matching exact image reference */}
+        {(() => {
+          const premierBestSellers = [
+            {
+              id: 'lmr-w-01',
+              product: PRODUCTS.find((p) => p.id === 'lmr-w-01'),
+              kicker: 'QUIET LUXURY',
+              rating: 4.9,
+              title: 'Sienna Cashmere Coat',
+              subtitle: 'Grade-A Mongolian cashmere',
+              discount: '-14%',
+              price: 68500,
+              oldPrice: 79900,
+              image: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=1200&q=85',
+              crop: 'object-[center_20%]',
+              colors: [
+                { name: 'Espresso', hex: '#3E2723' },
+                { name: 'Mocha', hex: '#6B4A3A' },
+                { name: 'Cream', hex: '#FAF6F0' },
+              ],
+            },
+            {
+              id: 'lmr-m-01',
+              product: PRODUCTS.find((p) => p.id === 'lmr-m-01'),
+              kicker: 'QUIET LUXURY',
+              rating: 4.9,
+              title: 'Milano Wool Trench',
+              subtitle: 'Virgin wool & cashmere melton',
+              discount: '-15%',
+              price: 74900,
+              oldPrice: 88000,
+              image: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=1200&q=85',
+              crop: 'object-[center_18%]',
+              colors: [
+                { name: 'Navy', hex: '#1D263B' },
+                { name: 'Slate', hex: '#7D8491' },
+                { name: 'Caramel', hex: '#C48A5A' },
+              ],
+            },
+            {
+              id: 'lmr-m-02',
+              product: PRODUCTS.find((p) => p.id === 'lmr-m-02'),
+              kicker: 'ESSENTIALS',
+              rating: 4.7,
+              title: 'Verona Suede Jacket',
+              subtitle: 'Tuscan split suede',
+              discount: '-15%',
+              price: 59900,
+              oldPrice: 69900,
+              image: 'https://images.unsplash.com/photo-1617127365659-c47fa864d8bc?auto=format&fit=crop&w=1200&q=85',
+              crop: 'object-[center_20%]',
+              colors: [
+                { name: 'Espresso', hex: '#3E2723' },
+                { name: 'Caramel', hex: '#C48A5A' },
+                { name: 'Black', hex: '#1A1A1A' },
+              ],
+            },
+            {
+              id: 'lmr-w-03',
+              product: PRODUCTS.find((p) => p.id === 'lmr-w-03'),
+              kicker: 'ESSENTIALS',
+              rating: 4.8,
+              title: 'Palermo Cashmere Knit',
+              subtitle: '4-ply combed cashmere',
+              discount: '-10%',
+              price: 32500,
+              oldPrice: 36000,
+              image: 'https://images.unsplash.com/photo-1576995853123-5a10305d93c0?auto=format&fit=crop&w=1200&q=85',
+              crop: 'object-[center_28%]',
+              colors: [
+                { name: 'Cream', hex: '#FAF6F0' },
+                { name: 'Tan', hex: '#D2B48C' },
+                { name: 'Charcoal', hex: '#4A4A4A' },
+                { name: 'Navy', hex: '#1A237E' },
+              ],
+            },
+          ];
+
+          return (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4 xl:gap-5 items-stretch">
+              {premierBestSellers.map((item) => {
+                const prod = item.product;
+                const isWishlisted = prod ? isInWishlist(prod.id) : false;
+
+                return (
+                  <div
+                    key={item.id}
+                    id={`best-seller-card-${item.id}`}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`View ${item.title}`}
+                    onClick={() => {
+                      if (prod) viewProduct(prod);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        if (prod) viewProduct(prod);
+                      }
+                    }}
+                    className="group bg-[#FAF6F0] rounded-xl sm:rounded-2xl border border-[#EBDDCF] shadow-[0_2px_12px_rgba(43,29,23,0.04)] hover:shadow-[0_8px_24px_rgba(43,29,23,0.08)] hover:border-[#C48A5A]/60 transition-all duration-300 overflow-hidden flex flex-col h-full cursor-pointer"
+                  >
+                    {/* Top Image Section: Compact & Balanced */}
+                    <div className="relative w-full aspect-[1.25/1] overflow-hidden bg-[#EFE8DF]">
+                      <img
+                        src={getOptimizedImageUrl(item.image, 600, 80)}
+                        srcSet={getResponsiveSrcSet(item.image, [360, 480, 600, 800])}
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                        alt={item.title}
+                        loading="lazy"
+                        decoding="async"
+                        referrerPolicy="no-referrer"
+                        className={`w-full h-full object-cover ${item.crop} group-hover:scale-104 transition-transform duration-700 ease-out`}
+                      />
+
+                      {/* Stacked Badges in Top Left */}
+                      <div className="absolute top-2 sm:top-2.5 left-2 sm:left-2.5 z-10 flex flex-col items-start gap-0.5 pointer-events-none">
+                        <span className="bg-[#9E6D42] text-white text-[8.5px] sm:text-[9px] font-semibold tracking-[0.14em] px-2 py-0.5 rounded-[2px] uppercase shadow-xs">
+                          NEW SEASON
+                        </span>
+                        <span className="bg-white text-[#2B1D17] text-[9px] sm:text-[9.5px] font-bold tracking-[0.04em] px-1.5 py-0.5 rounded-[2px] shadow-xs">
+                          {item.discount}
+                        </span>
+                      </div>
+
+                      {/* Wishlist Heart Icon Button */}
+                      <button
+                        type="button"
+                        id={`wishlist-best-seller-${item.id}`}
+                        aria-label={isWishlisted ? `Remove ${item.title} from wishlist` : `Add ${item.title} to wishlist`}
+                        title={isWishlisted ? 'Saved in your wishlist' : 'Save to wishlist'}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (prod) {
+                            toggleWishlist(prod);
+                          }
+                        }}
+                        className={`absolute top-2 sm:top-2.5 right-2 sm:right-2.5 z-10 w-7 h-7 sm:w-7.5 sm:h-7.5 rounded-full flex items-center justify-center transition-all duration-300 shadow-xs hover:scale-110 active:scale-95 cursor-pointer ${
+                          isWishlisted
+                            ? 'bg-white text-[#C48A5A] border border-[#C48A5A] shadow-[0_2px_8px_rgba(196,138,90,0.25)]'
+                            : 'bg-white/95 hover:bg-white text-[#2B1D17] hover:text-[#C48A5A] border border-[#E7D6C1]/70'
+                        }`}
+                      >
+                        <Heart
+                          className={`w-3 sm:w-3.5 h-3 sm:h-3.5 transition-transform duration-300 ease-out ${
+                            isWishlisted ? 'fill-[#C48A5A] text-[#C48A5A]' : 'text-[#2B1D17] stroke-[1.6]'
+                          }`}
+                        />
+                      </button>
+                    </div>
+
+                    {/* Bottom Content Area: Refined & Compact */}
+                    <div className="p-3 sm:p-3.5 flex flex-col flex-1 justify-between bg-[#FAF6F0] min-w-0">
+                      <div className="min-w-0">
+                        {/* Kicker & Rating Row */}
+                        <div className="flex items-center justify-between gap-1.5 mb-1.5 min-w-0">
+                          <span className="font-sans text-[9px] sm:text-[9.5px] uppercase tracking-[0.16em] sm:tracking-[0.18em] text-[#A6805B] font-medium">
+                            {item.kicker}
+                          </span>
+                          <div className="flex items-center gap-1 shrink-0 text-[10.5px] sm:text-[11px] text-[#A6805B] font-medium">
+                            <Star className="w-3 h-3 fill-[#C48A5A] text-[#C48A5A]" />
+                            <span className="text-[#2B1D17] font-semibold">{item.rating.toFixed(1)}</span>
+                          </div>
+                        </div>
+
+                        {/* Classical Serif Title */}
+                        <h3 className="font-serif text-[15px] sm:text-[16px] lg:text-[16.5px] font-normal text-[#221610] tracking-[0.015em] mb-1.5 leading-snug group-hover:text-[#9E7A5A] transition-colors duration-300 break-words">
+                          {item.title}
+                        </h3>
+
+                        {/* Fully Written Subtitle & Description */}
+                        <p className="font-sans text-[12px] sm:text-[12.5px] text-[#523B2F] font-normal leading-relaxed tracking-[0.01em] mb-2.5 break-words">
+                          {item.subtitle}
+                        </p>
+
+                        {/* Color Swatches */}
+                        <div className="flex items-center gap-1.5 mb-2">
+                          {item.colors.map((c, idx) => (
+                            <span
+                              key={idx}
+                              className="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded-full border border-black/10 shadow-2xs inline-block"
+                              style={{ backgroundColor: c.hex }}
+                              title={c.name}
+                            />
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Price & Interactive Arrow Navigation */}
+                      <div className="flex items-center justify-between pt-2 sm:pt-2.5 border-t border-[#EBDDCF]/70 mt-auto min-w-0">
+                        <div className="flex items-baseline gap-1.5 flex-wrap min-w-0">
+                          <span className="font-sans text-[13px] sm:text-[14.5px] font-semibold text-[#221610] tracking-normal whitespace-nowrap">
+                            {formatPKR(item.price)}
+                          </span>
+                          {item.oldPrice && (
+                            <span className="text-[10px] sm:text-[11.5px] text-[#9E8B7E] line-through whitespace-nowrap">
+                              {formatPKR(item.oldPrice)}
+                            </span>
+                          )}
+                        </div>
+
+                        <span className="w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-[#8C6D53] group-hover:text-[#221610] group-hover:translate-x-0.5 transition-all duration-300 shrink-0 ml-1">
+                          <ArrowRight className="w-3 h-3" />
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
       </section>
 
-      {/* 7. DISCERNING PATRONS & VERIFIED REVIEWS */}
+      {/* 7. VERIFIED REVIEWS */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-xl mx-auto mb-12 space-y-2">
+        <div className="text-center max-w-xl mx-auto mb-8 sm:mb-10 lg:mb-12 space-y-2">
           <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl text-[#1F140E] tracking-[0.03em] leading-none">
             Client <span className="text-[#A66838]">Reviews</span>
           </h2>
-          <p className="text-xs text-[#523B2F]">
-            Verified experiences from patrons across Lahore, Karachi, Islamabad, and international salons.
+          <p className="text-xs sm:text-sm text-[#523B2F] leading-relaxed">
+            Authentic experiences from clients across Lahore, Karachi, Islamabad, and international salons.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {INITIAL_REVIEWS.slice(0, 3).map((review) => (
-            <div
-              key={review.id}
-              className="bg-white border border-[#E2D4C3] p-7 flex flex-col justify-between shadow-[0_2px_14px_rgba(43,29,23,0.04)] hover:shadow-[0_12px_32px_rgba(43,29,23,0.08)] hover:border-[#B87A45] transition-all duration-300"
-            >
-              <div>
-                <div className="flex items-center gap-1 text-[#C48A5A] mb-3.5">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-3.5 h-3.5 fill-[#C48A5A] text-[#C48A5A]" />
-                  ))}
-                </div>
-                <h4 className="font-sans text-base sm:text-lg font-normal text-[#1F140E] mb-2 leading-snug">
-                  &ldquo;{review.title}&rdquo;
-                </h4>
-                <p className="text-xs text-[#523B2F] leading-relaxed font-light">
-                  {review.comment}
-                </p>
-              </div>
+        {/* Client Reviews Cards Grid - Matching Image Reference */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5 lg:gap-6 items-stretch">
+          {INITIAL_REVIEWS.slice(0, 3).map((review) => {
+            const avatarMap: Record<string, string> = {
+              'rev-01': 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&q=80',
+              'rev-02': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
+              'rev-03': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80',
+            };
+            const avatarSrc = avatarMap[review.id] || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80';
 
-              <div className="pt-4 mt-6 border-t border-[#EFE5D8] flex items-center justify-between">
+            return (
+              <div
+                key={review.id}
+                className="bg-[#FAF6F0] rounded-[20px] sm:rounded-[22px] border border-[#EBDDCF] p-5 sm:p-6 lg:p-7 flex flex-col justify-between shadow-[0_4px_22px_rgba(43,29,23,0.04)] hover:shadow-[0_12px_32px_rgba(43,29,23,0.08)] hover:border-[#C48A5A]/50 transition-all duration-300 min-w-0"
+              >
                 <div>
-                  <h5 className="font-semibold text-xs text-[#1F140E]">{review.author}</h5>
-                  <p className="text-[10.5px] text-[#7A6253] mt-0.5">{review.city}</p>
+                  {/* Top Row: Stars + Classical Quotation Mark */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-1.5 text-[#C48A5A]">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} className="w-3.5 sm:w-4 h-3.5 sm:h-4 fill-[#C48A5A] text-[#C48A5A]" />
+                      ))}
+                    </div>
+                    <span className="font-serif text-3xl sm:text-4xl text-[#D8C7B5] leading-none select-none font-normal" aria-hidden="true">
+                      &rdquo;
+                    </span>
+                  </div>
+
+                  {/* Classical Serif Title */}
+                  <h4 className="font-serif text-[19px] sm:text-[21px] lg:text-[22px] font-normal text-[#1F140E] mb-2.5 leading-snug tracking-normal">
+                    &ldquo;{review.title}&rdquo;
+                  </h4>
+
+                  {/* Review Excerpt */}
+                  <p className="font-sans text-[13.5px] sm:text-[14px] text-[#3D2B22] font-normal leading-relaxed mb-6 break-words">
+                    {review.comment}
+                  </p>
                 </div>
-                {review.verified && (
-                  <span className="text-[9.5px] uppercase tracking-wider bg-[#FAF6F0] text-[#1F140E] px-2.5 py-1 font-semibold border border-[#D5C2AF]">
-                    Verified Patron
-                  </span>
-                )}
+
+                {/* Bottom Row with Client Avatar, Details, and Pill Badge */}
+                <div className="pt-4 sm:pt-5 mt-auto border-t border-[#EBDDCF] flex items-center justify-between gap-2.5 sm:gap-3 flex-wrap">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <img
+                      src={avatarSrc}
+                      alt={review.author}
+                      referrerPolicy="no-referrer"
+                      loading="lazy"
+                      decoding="async"
+                      className="w-10 sm:w-11 h-10 sm:h-11 rounded-full object-cover border border-[#E2D4C3] shrink-0 shadow-2xs"
+                    />
+                    <div className="min-w-0">
+                      <h5 className="font-sans font-medium text-[13.5px] sm:text-[14px] text-[#1F140E] leading-tight">
+                        {review.author}
+                      </h5>
+                      <p className="font-sans text-[11px] sm:text-[11.5px] text-[#8C7667] mt-1 leading-tight">
+                        {review.city}
+                      </p>
+                    </div>
+                  </div>
+
+                  {review.verified && (
+                    <span className="inline-flex items-center gap-1.5 text-[9.5px] sm:text-[10px] uppercase tracking-[0.14em] font-semibold text-[#9E6D42] border border-[#C8A98E] rounded-full px-3 py-1 bg-transparent shrink-0 whitespace-nowrap shadow-2xs">
+                      <Check className="w-3 h-3 text-[#9E6D42] stroke-[2.2]" />
+                      <span>VERIFIED</span>
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
-        <div className="text-center mt-10">
+        {/* Read All Reviews Bottom Link with Flanking Lines */}
+        <div className="flex items-center justify-center gap-4 sm:gap-6 mt-10 sm:mt-12">
+          <div className="hidden sm:block flex-1 max-w-[120px] h-[1px] bg-[#E2D2BF]"></div>
           <button
             onClick={() => setCurrentPage('reviews')}
-            className="text-xs uppercase tracking-[0.2em] text-[#2B1D17] hover:text-[#C48A5A] font-semibold underline decoration-[#C48A5A] cursor-pointer"
+            className="text-xs uppercase tracking-[0.2em] text-[#9E6D42] hover:text-[#1F140E] font-semibold underline decoration-[#C48A5A] underline-offset-4 flex items-center gap-2 transition-colors cursor-pointer group"
           >
-            Read All Patron Reviews ({INITIAL_REVIEWS.length}+ Testimonials)
+            <span>READ ALL CLIENT REVIEWS ({INITIAL_REVIEWS.length}+ TESTIMONIALS)</span>
+            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1.5 transition-transform" />
           </button>
+          <div className="hidden sm:block flex-1 max-w-[120px] h-[1px] bg-[#E2D2BF]"></div>
         </div>
       </section>
 
       {/* 8. THE ATELIER DIARY / LOOKBOOK GALLERY */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-10 space-y-1">
+        <div className="text-center mb-6 sm:mb-8 lg:mb-10 space-y-1.5">
           <h2 className="font-heading text-3xl sm:text-4xl text-[#2B1D17] tracking-[0.03em] leading-none">
             Client <span className="text-[#C48A5A]">Lookbook</span>
           </h2>
-          <p className="text-xs text-[#6B4A3A]">
+          <p className="text-xs sm:text-sm text-[#6B4A3A]">
             Tag your styling moments to be featured in the private atelier lookbook.
           </p>
         </div>
