@@ -1,4 +1,2 @@
-import app from "../server/index.ts";
-
-// Export Express application for Vercel Serverless Function runtime
+import app from '../server/index';
 export default app;
