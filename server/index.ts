@@ -13,7 +13,7 @@ import {
   sendOrderStatusEmail,
   sendAdminVerificationEmail,
   sendPasswordResetEmail,
-} from './email.ts';
+} from './email.js';
 
 // On Vercel Serverless environment, SQLite files must be writable in /tmp
 if (process.env.VERCEL && (!process.env.DATABASE_URL || process.env.DATABASE_URL.startsWith('file:'))) {
